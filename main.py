@@ -24,9 +24,15 @@ bot.remove_command('help')
 
 @bot.command()
 async def help(ctx):
+    command_string = '!help - Display all commands\n' \
+                     '!start - Create a player in Escordia RPG\n' \
+                     '!profile - Check your current profile and stats\n' \
+                     '!fight - Fight against a monster\n' \
+                     '!attack - Perform a normal attack against your opponent\n' \
+                     '!heal - Fully heal your character'
     embed = discord.Embed(
         title='Bot Commands',
-        description='Welcome to the help section. Here are all the commands:',
+        description= command_string,
         color=discord.Colour.red()
     )
     await ctx.send(embed=embed)
@@ -48,9 +54,21 @@ async def profile(ctx):
         for line in file:
             res = json.loads(line)
             if res['name'] == ctx.author.name:
+                player_obj = player.createPlayer(res)
+                player_description = f'**Stats**: {player_obj.stats}\n' \
+                                     f'**Lvl**: {player_obj.lvl}\n' \
+                                     f'**Xp**: {player_obj.xp}\n' \
+                                     f'**Xp to level up**: {player_obj.xpToNextLvl}\n' \
+                                     f'**Alive**: {player_obj.alive}\n' \
+                                     f'**Aptitudes**: {player_obj.aptitudes}\n' \
+                                     f'**Aptitude points**: {player_obj.aptitudePoints}\n' \
+                                     f'**Equipment**: {player_obj.equipment}\n' \
+                                     f'**Money**: {player_obj.money}\n' \
+                                     f'**Combos**: {player_obj.combos}\n' \
+                                     f'**Spells**: {player_obj.spells}\n'
                 embed = discord.Embed(
                     title=f'Profile - {ctx.author.name}',
-                    description=res,
+                    description=player_description,
                     color = discord.Colour.red()
                 )
                 embed.set_image(url=ctx.author.avatar_url)

@@ -28,7 +28,7 @@ def createEnemy(enemy_json):
 class Bat(Enemy):
     def __init__(self) -> None:
         stats = {'maxHp': 11,
-                 'hp': 10,
+                 'hp': 11,
                  'maxMp': 10,
                  'mp': 10,
                  'atk': 3,
