@@ -11,9 +11,11 @@ class Fight:
         self.fight_msg = fight_msg
 
     def normal_attack(self):
-        self.player.normal_attack(self.enemy)
+        enemy_txt = ""
+        player_txt = self.player.normal_attack(self.enemy)
         if self.enemy.alive:
-            self.enemy.normal_attack(self.player)
+            enemy_txt = self.enemy.normal_attack(self.player)
+        return player_txt + enemy_txt
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)

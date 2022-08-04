@@ -5,7 +5,7 @@ import math
 Parent class for all instances that can enter in combat.
 A Battler will always be either an Enemy, a Player's ally or the Player himself
 '''
-class Battler():
+class Battler:
     '''
     Parent class for all instances that can enter in combat.
     A Battler will always be either an Enemy, a Player's ally or the Player himself
@@ -40,11 +40,12 @@ class Battler():
         '''
         if dmg < 0: dmg = 0
         self.stats['hp'] -= dmg
-        print(f'{self.name} takes {dmg} damage!')
+        info_dmg = f'{self.name} takes {dmg} damage!\n'
         # Defender dies
         if self.stats['hp'] <= 0:
-            print(f'{self.name} has been slain.')
+            info_dmg += f'{self.name} has been slain.\n'
             self.alive = False
+        return info_dmg
 
     def normal_attack(self, defender):
         '''
@@ -61,16 +62,20 @@ class Battler():
         dmg : int
             Damage dealt to defender
         '''
-        print(f'{self.name} attacks!')
+        info = f'{self.name} attacks!\n'
+        info_crit = ""
+        info_miss = ""
+        info_dmg = ""
         dmg = round(self.stats['atk'] * (100/(100 + defender.stats['def']*1.5)))
         # Check for critical attack
-        dmg = self.check_critical(dmg)
+        dmg, info_crit = self.check_critical(dmg)
         # Check for missed attack
         if not check_miss(self, defender):
-            defender.take_dmg(dmg)
+            info_dmg = defender.take_dmg(dmg)
         else:
+            info_miss = f'{self.name}\'s attack missed!\n'
             dmg = 0
-        return dmg
+        return info + info_crit + info_miss + info_dmg
 
     def check_critical(self, dmg):
         '''
@@ -86,11 +91,12 @@ class Battler():
         dmg : int
             Damage dealt (after checking and operating if critical)
         '''
+        info = ""
         if self.stats['critCh'] > random.randint(0, 100):
-            print('Critical blow!')
-            return dmg * 2
+            info = 'Critical blow!\n'
+            return dmg * 2, info
         else:
-            return dmg
+            return dmg, info
 
     def recover_mp(self, amount):
         '''
@@ -142,7 +148,6 @@ def check_miss(attacker, defender):
     '''
     chance = math.floor(math.sqrt(max(0, (5 * defender.stats['speed'] - attacker.stats['speed'] * 2))))
     if chance > random.randint(0, 100):
-        print(f'{attacker.name}\'s attack missed!')
         return True
     return False
 
