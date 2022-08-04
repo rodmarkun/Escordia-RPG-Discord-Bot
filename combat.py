@@ -1,4 +1,5 @@
 import random
+import math
 
 '''
 Parent class for all instances that can enter in combat.
