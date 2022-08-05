@@ -17,6 +17,13 @@ class Fight:
             enemy_txt = self.enemy.normal_attack(self.player)
         return player_txt + enemy_txt
 
+    def spell(self, spell):
+        enemy_txt = ""
+        player_txt = spell.effect(self.player, self.enemy)
+        if self.enemy.alive:
+            enemy_txt = self.enemy.normal_attack(self.player)
+        return player_txt + enemy_txt
+
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
 

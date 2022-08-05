@@ -10,6 +10,8 @@ import fight as fight_module
 import file_management
 import random
 
+import skills
+
 DISCORD_TOKEN = os.environ.get('DISCORD_TOKEN')
 ENEMY = 'Wolf'
 
@@ -29,7 +31,10 @@ async def help(ctx):
                      '!profile - Check your current profile and stats\n' \
                      '!fight - Fight against a monster\n' \
                      '!attack - Perform a normal attack against your opponent\n' \
-                     '!heal - Fully heal your character'
+                     '!spells - See a list with all of your spells\n' \
+                     '!spells [number] - Cast a certain spell\n' \
+                     '!heal - Fully heal your character\n' \
+                     '!mana - Fully replenish your mana'
     embed = discord.Embed(
         title='Bot Commands',
         description= command_string,
@@ -105,14 +110,39 @@ async def attack(ctx):
 
         file_management.delete_fight(ctx.author.name)
         if not in_fight.enemy.alive:
-            in_fight.player.add_exp(in_fight.enemy.xpReward)
-            in_fight.player.add_money(in_fight.enemy.goldReward)
-            file_management.delete_player(in_fight.player.name)
-            file_management.write_player(in_fight.player)
-            await ctx.send(embed=embed_victory_msg(ctx=ctx, enemy=in_fight.enemy, player_obj=in_fight.player, xp=in_fight.enemy.xpReward, gold=in_fight.enemy.goldReward))
+            await win_fight(ctx, in_fight)
         else:
             file_management.write_fight(in_fight)
             await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=in_fight.enemy, player_obj=in_fight.player))
+
+@bot.command()
+async def spells(ctx, arg=0):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    if player_obj is not None:
+        if arg == 0:
+            spell_str = f"**{ctx.author.name}'s Spells:**\n"
+            i = 1
+            for spell in player_obj.spells:
+                spell_str += f"{i} - {spell['name']}\n"
+                i += 1
+            await ctx.send(spell_str)
+        else:
+            fight_obj = file_management.check_if_in_fight(ctx.author.name)
+            if fight_obj is not None:
+                spell = skills.createSpell(fight_obj.player.spells[arg-1])
+                info_str = fight_obj.spell(spell)
+                file_management.delete_fight(ctx.author.name)
+                await ctx.send(info_str)
+                if fight_obj.enemy.alive:
+                    file_management.write_fight(fight_obj)
+                    await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=fight_obj.enemy, player_obj=fight_obj.player))
+                else:
+                    await win_fight(ctx, in_fight=fight_obj)
+            else:
+                await ctx.send(f'You are not currently in a fight, {ctx.author.mention}')
+    else:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+
 
 @bot.command()
 async def heal(ctx):
@@ -124,6 +154,17 @@ async def heal(ctx):
         file_management.delete_player(player_obj.name)
         file_management.write_player(player_obj)
         await ctx.send(f'{player_obj.name}, you have fully healed.')
+
+@bot.command()
+async def mana(ctx):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    in_fight = file_management.check_if_in_fight(ctx.author.name)
+
+    if in_fight is None and player_obj is not None:
+        combat.fully_recover_mp(player_obj)
+        file_management.delete_player(player_obj.name)
+        file_management.write_player(player_obj)
+        await ctx.send(f'{player_obj.name}, you have fully recovered your MP.')
 
 def embed_fight_msg(ctx, enemy, player_obj):
     embed = discord.Embed(
@@ -140,6 +181,15 @@ def embed_fight_msg(ctx, enemy, player_obj):
     embed.set_footer(
         text=f'{player_obj.name}\nHP: {player_obj.stats["hp"]}/{player_obj.stats["maxHp"]}\nMP: {player_obj.stats["mp"]}/{player_obj.stats["maxMp"]}')
     return embed
+
+async def win_fight(ctx, in_fight):
+    in_fight.player.add_exp(in_fight.enemy.xpReward)
+    in_fight.player.add_money(in_fight.enemy.goldReward)
+    file_management.delete_player(in_fight.player.name)
+    file_management.write_player(in_fight.player)
+    await ctx.send(
+        embed=embed_victory_msg(ctx=ctx, enemy=in_fight.enemy, player_obj=in_fight.player, xp=in_fight.enemy.xpReward,
+                                gold=in_fight.enemy.goldReward))
 
 def embed_victory_msg(ctx, enemy, player_obj, xp, gold):
     embed = discord.Embed(

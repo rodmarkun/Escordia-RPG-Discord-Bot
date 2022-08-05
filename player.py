@@ -3,6 +3,7 @@ import json
 import inventory
 #import text
 import combat
+import skills
 
 
 class Player(combat.Battler):
@@ -77,7 +78,7 @@ class Player(combat.Battler):
                           'Armor': None}  # Player's equipment, can be further expanded
         self.money = 20  # Current money
         self.combos = []  # Player's selection of combos (atk, cp)
-        self.spells = []  # Player's selection of spells (matk, mp)
+        self.spells = [skills.spellFireball]  # Player's selection of spells (matk, mp)
 
         self.activeQuests = []
         self.completedQuests = []
