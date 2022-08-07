@@ -1,6 +1,7 @@
 import discord
 import os
 from discord.ext import commands
+from StringProgressBar import progressBar
 
 import combat
 import enemies
@@ -9,6 +10,7 @@ import json
 import fight as fight_module
 import file_management
 import random
+from area import areas
 
 import skills
 
@@ -21,7 +23,8 @@ COMBOS_EMOJI = '\U0001F1E8'
 RED_CIRCLE_EMOJI = '\U0001F534'
 SPARKLER_EMOJI = '\U0001F387'
 
-bot = commands.Bot(command_prefix='!')
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix='!', intents=intents)
 bot.remove_command('help')
 
 @bot.command()
@@ -29,12 +32,17 @@ async def help(ctx):
     command_string = '!help - Display all commands\n' \
                      '!start - Create a player in Escordia RPG\n' \
                      '!profile - Check your current profile and stats\n' \
-                     '!fight - Fight against a monster\n' \
+                     '!profile [player name] - Show profile of a certain player\n' \
+                     '!aptitudes - Show your current aptitudes\n' \
+                     '!aptitudes [aptitude] [points] - Spend points on upgrading aptitudes\n' \
+                     '!area - Show info about your current area \n' \
+                     '!fight - Fight against a monster in your area\n' \
                      '!attack - Perform a normal attack against your opponent\n' \
                      '!spells - See a list with all of your spells\n' \
                      '!spells [number] - Cast a certain spell\n' \
                      '!heal - Fully heal your character\n' \
-                     '!mana - Fully replenish your mana'
+                     '!mana - Fully replenish your mana\n' \
+                     '!players - Show all players of Escordia RPG\n'
     embed = discord.Embed(
         title='Bot Commands',
         description= command_string,
@@ -54,37 +62,101 @@ async def start(ctx):
         await ctx.send(f'Welcome, {ctx.author.mention}, to the world of Escordia.')
 
 @bot.command()
-async def profile(ctx):
+async def area(ctx):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    current_area = areas[player_obj.currentArea - 1]
+    if player_obj is None:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+    else:
+        await ctx.send(f'You are currently in **{current_area.name}** (area {current_area.number})\n')
+
+@bot.command()
+async def players(ctx):
+    players_string = ''
     with open("players.txt", "r") as file:
         for line in file:
             res = json.loads(line)
-            if res['name'] == ctx.author.name:
+            players_string += res['name'] + '\n'
+    embed = discord.Embed(
+        title=f'Players - {ctx.guild.name}',
+        description=players_string,
+        color=discord.Colour.red()
+    )
+    embed.set_image(url=ctx.guild.icon_url)
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def profile(ctx, arg=None):
+    with open("players.txt", "r") as file:
+        for line in file:
+            res = json.loads(line)
+            search = ctx.author.name
+            if arg is not None:
+                search = arg
+            if res['name'] == search:
                 player_obj = player.createPlayer(res)
-                player_description = f'**Stats**: {player_obj.stats}\n' \
-                                     f'**Lvl**: {player_obj.lvl}\n' \
-                                     f'**Xp**: {player_obj.xp}\n' \
-                                     f'**Xp to level up**: {player_obj.xpToNextLvl}\n' \
-                                     f'**Alive**: {player_obj.alive}\n' \
-                                     f'**Aptitudes**: {player_obj.aptitudes}\n' \
-                                     f'**Aptitude points**: {player_obj.aptitudePoints}\n' \
-                                     f'**Equipment**: {player_obj.equipment}\n' \
-                                     f'**Money**: {player_obj.money}\n' \
-                                     f'**Combos**: {player_obj.combos}\n' \
-                                     f'**Spells**: {player_obj.spells}\n'
                 embed = discord.Embed(
-                    title=f'Profile - {ctx.author.name}',
-                    description=player_description,
+                    title=f'Profile - {player_obj.name}',
+                    description=player_obj.show_info(),
                     color = discord.Colour.red()
                 )
-                embed.set_image(url=ctx.author.avatar_url)
+                fetched_user = discord.utils.get(ctx.guild.members, name=search)
+                embed.set_image(url=fetched_user.avatar_url)
                 await ctx.send(embed=embed)
                 return
-    await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+    if arg is None:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+    else:
+        await ctx.send(f'User does not have a character in Escordia yet. Make sure to just type the player\'s name after !profile. You can see current players in !players')
+
+@bot.command()
+async def aptitudes(ctx, apt=None, apt_points=None):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    if player_obj is None:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+    else:
+        if apt is None:
+            player_apts = f'**---APTITUDES---**\n' \
+               f'**STR**: {player_obj.aptitudes["str"]}\n' \
+               f'**DEX**: {player_obj.aptitudes["dex"]}\n' \
+               f'**INT**: {player_obj.aptitudes["int"]}\n' \
+               f'**WIS**: {player_obj.aptitudes["wis"]}\n' \
+               f'**CONST**: {player_obj.aptitudes["const"]}\n\n' \
+               f'To upgrade an aptitude, use !aptitudes [aptitude_name] [points]\n' \
+               f'Example: !aptitudes dex 1\n' \
+               f'You currently have {player_obj.aptitudePoints} aptitude points.'
+            embed = discord.Embed(
+                title=f'Aptitudes - {player_obj.name}',
+                description=player_apts,
+                color=discord.Colour.red()
+            )
+            embed.set_image(url=ctx.author.avatar_url)
+            await ctx.send(embed=embed)
+        elif apt is not None and apt_points is not None:
+            if file_management.check_if_in_fight(ctx.author.name) is None:
+                try:
+                    if player_obj.aptitudePoints < int(apt_points):
+                        await ctx.send(f'{ctx.author.mention}, you do not have that many aptitude points.')
+                        return
+                    else:
+                        player_obj.aptitudes[apt.lower()] += int(apt_points)
+                        player_obj.update_stats_to_aptitudes(apt.lower(), int(apt_points))
+                        player_obj.aptitudePoints -= int(apt_points)
+                        file_management.delete_player(ctx.author.name)
+                        file_management.write_player(player_obj)
+                        await ctx.send(f'{ctx.author.mention} you have succesfully upgraded your {apt.lower()} to {player_obj.aptitudes[apt.lower()]}')
+                except:
+                    await ctx.send(f'Something went wrong. Are you sure you typed the aptitude correctly, {ctx.author.mention}?')
+            else:
+                await ctx.send(f'You cannot upgrade aptitudes while in combat.')
+
+
 
 @bot.command()
 async def fight(ctx):
     player_obj = file_management.check_if_exists(ctx.author.name)
-    enemy = random.choice(enemies.enemies_by_zones[1])()
+    curr_area = areas[player_obj.currentArea - 1]
+    enemy = random.choice(curr_area.enemyList)()
 
     in_fight = file_management.check_if_in_fight(ctx.author.name)
     if in_fight is not None:
@@ -167,9 +239,11 @@ async def mana(ctx):
         await ctx.send(f'{player_obj.name}, you have fully recovered your MP.')
 
 def embed_fight_msg(ctx, enemy, player_obj):
+    hp_bar = progressBar.filledBar(enemy.stats['maxHp'], enemy.stats['hp'], size=10)
     embed = discord.Embed(
         title=f'Fight - {ctx.author}',
-        description=f'You are fighting a **{enemy.name}** [HP:{enemy.stats["hp"]}].\n'
+        description=f'You are fighting a **{enemy.name}**.\n'
+                    f'HP: {hp_bar[0]} - {enemy.stats["hp"]}/{enemy.stats["maxHp"]}\n'
                     f'What will you do?\n\n'
                     f'{RED_CIRCLE_EMOJI} Attack - !attack\n'
                     f'{RED_CIRCLE_EMOJI} Spells - !spells\n'
@@ -183,13 +257,15 @@ def embed_fight_msg(ctx, enemy, player_obj):
     return embed
 
 async def win_fight(ctx, in_fight):
-    in_fight.player.add_exp(in_fight.enemy.xpReward)
+    lvl_up = in_fight.player.add_exp(in_fight.enemy.xpReward)
     in_fight.player.add_money(in_fight.enemy.goldReward)
     file_management.delete_player(in_fight.player.name)
     file_management.write_player(in_fight.player)
     await ctx.send(
         embed=embed_victory_msg(ctx=ctx, enemy=in_fight.enemy, player_obj=in_fight.player, xp=in_fight.enemy.xpReward,
                                 gold=in_fight.enemy.goldReward))
+    if lvl_up:
+        await ctx.send(f'{ctx.author.mention} - {lvl_up}')
 
 def embed_victory_msg(ctx, enemy, player_obj, xp, gold):
     embed = discord.Embed(

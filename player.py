@@ -63,7 +63,7 @@ class Player(combat.Battler):
 
         self.lvl = 1  # Player Lvl
         self.xp = 0  # Current xp
-        self.xpToNextLvl = 35  # Amount of xp to reach next lvl is multiplied by 1.5 per level
+        self.xpToNextLvl = 15  # Amount of xp to reach next lvl is multiplied by 1.5 per level
         self.comboPoints = 0
         self.aptitudes = {'str': 5,
                           'dex': 5,
@@ -83,11 +83,40 @@ class Player(combat.Battler):
         self.activeQuests = []
         self.completedQuests = []
 
+        self.currentArea = 1
+
         self.isAlly = True  # Check if battler is an ally or not
 
     def show_info(self):
-        return f'Player Name: {self.name}\n' \
-               f'Level: {self.lvl}'
+        return f'**Player Name**: {self.name}\n' \
+               f'**Level**: {self.lvl}\n' \
+               f'**Xp**: {self.xp}\n' \
+               f'**Xp to next level**: {self.xpToNextLvl-self.xp}\n' \
+               f'**---STATS---**\n' \
+               f'**MAXHP**: {self.stats["maxHp"]}\n' \
+               f'**HP**: {self.stats["hp"]}\n' \
+               f'**MAXMP**: {self.stats["maxMp"]}\n' \
+               f'**MP**: {self.stats["mp"]}\n' \
+               f'**ATK**: {self.stats["atk"]}\n' \
+               f'**DEF**: {self.stats["def"]}\n' \
+               f'**MATK**: {self.stats["matk"]}\n' \
+               f'**MDEF**: {self.stats["mdef"]}\n' \
+               f'**SPEED**: {self.stats["speed"]}\n' \
+               f'**CRITCH**: {self.stats["critCh"]}\n' \
+               f'**---APTITUDES---**\n' \
+               f'**STR**: {self.aptitudes["str"]}\n' \
+               f'**DEX**: {self.aptitudes["dex"]}\n' \
+               f'**INT**: {self.aptitudes["int"]}\n' \
+               f'**WIS**: {self.aptitudes["wis"]}\n' \
+               f'**CONST**: {self.aptitudes["const"]}\n' \
+               f'**---EQUIPMENT---**\n' \
+               f'**Weapon**: {self.equipment["Weapon"]}\n' \
+               f'**Armor**: {self.equipment["Armor"]}\n' \
+               f'**----------------**\n' \
+               f'**Aptitude Points**: {self.aptitudePoints}\n' \
+               f'**Money**: {self.money}\n' \
+               f'**Current area**: {self.currentArea}\n'
+
 
     def normal_attack(self, defender):
         self.addComboPoints(1)
@@ -155,20 +184,22 @@ class Player(combat.Battler):
         exp : int
             Amount of exp points to add.
         '''
+        lvl_up_str = ""
         self.xp += exp
-        print(f"You earn {exp}xp")
+        #print(f"You earn {exp}xp")
         # Level up:
-        while (self.xp >= self.xpToNextLvl):
+        while self.xp >= self.xpToNextLvl:
             self.xp -= self.xpToNextLvl
             self.lvl += 1
             # You can change this formula for different exp progression
-            self.xpToNextLvl = round(self.xpToNextLvl * 1.5 + 10 * self.lvl * self.lvl)
+            self.xpToNextLvl = round(self.xpToNextLvl * 1.25 + 10 * self.lvl * self.lvl/2)
             for stat in self.stats:
                 self.stats[stat] += 1
             self.aptitudePoints += 1
             combat.fully_heal(self)
             combat.fully_recover_mp(self)
-            print(f"Level up! You are now level {self.lvl}. You have {self.aptitudePoints} aptitude points")
+            lvl_up_str = f"Level up! You are now level {self.lvl}. You have {self.aptitudePoints} aptitude points"
+        return lvl_up_str
 
     def add_money(self, money):
         '''
@@ -181,32 +212,32 @@ class Player(combat.Battler):
         self.money += money
         print(f"You earn {money} coins")
 
-    def assign_aptitude_points(self):
-        '''
-        Menu for upgrading aptitudes.
-        '''
-        optionsDictionary = {'1': 'str',
-                             '2': 'dex',
-                             '3': 'int',
-                             '4': 'wis',
-                             '5': 'const'}
-        text.showAptitudes(self)
-        option = input("> ")
-        while option.lower() != 'q':
-            try:
-                if self.aptitudePoints >= 1:
-                    aptitudeToAssign = optionsDictionary[option]
-                    self.aptitudes[aptitudeToAssign] += 1
-                    print(f'{aptitudeToAssign} is now {self.aptitudes[aptitudeToAssign]}!')
-                    self.update_stats_to_aptitudes(aptitudeToAssign)
-                    self.aptitudePoints -= 1
-                else:
-                    print('Not enough points!')
-            except:
-                print('Please enter a valid number')
-            option = input("> ")
+    # def assign_aptitude_points(self):
+    #     '''
+    #     Menu for upgrading aptitudes.
+    #     '''
+    #     optionsDictionary = {'1': 'str',
+    #                          '2': 'dex',
+    #                          '3': 'int',
+    #                          '4': 'wis',
+    #                          '5': 'const'}
+    #     text.showAptitudes(self)
+    #     option = input("> ")
+    #     while option.lower() != 'q':
+    #         try:
+    #             if self.aptitudePoints >= 1:
+    #                 aptitudeToAssign = optionsDictionary[option]
+    #                 self.aptitudes[aptitudeToAssign] += 1
+    #                 print(f'{aptitudeToAssign} is now {self.aptitudes[aptitudeToAssign]}!')
+    #                 self.update_stats_to_aptitudes(aptitudeToAssign)
+    #                 self.aptitudePoints -= 1
+    #             else:
+    #                 print('Not enough points!')
+    #         except:
+    #             print('Please enter a valid number')
+    #         option = input("> ")
 
-    def update_stats_to_aptitudes(self, aptitude):
+    def update_stats_to_aptitudes(self, aptitude, points):
         '''
         Assigns the corresponding stat points when upgrading aptitudes.
 
@@ -215,16 +246,18 @@ class Player(combat.Battler):
             Aptitude to be upgraded.
         '''
         if aptitude == 'str':
-            self.stats['atk'] += 1
+            self.stats['atk'] += points
         elif aptitude == 'dex':
-            self.stats['speed'] += 1
-            self.stats['critCh'] += 1
+            self.stats['speed'] += points
+            self.stats['critCh'] += points
         elif aptitude == 'int':
-            self.stats['matk'] += 1
+            self.stats['matk'] += points
         elif aptitude == 'wis':
-            self.stats['maxMp'] += 3
+            self.stats['maxMp'] += 3 * points
+            self.stats['mdef'] += points
         elif aptitude == 'const':
-            self.stats['maxHp'] += 3
+            self.stats['maxHp'] += 2 * points
+            self.stats['def'] += points
 
     # def buy_from_vendor(self, vendor):
     #     '''
@@ -287,6 +320,7 @@ def createPlayer(player_json):
     player.activeQuests = player_json['activeQuests']
     player.completedQuests = player_json['completedQuests']
     player.isAlly = player_json['isAlly']
+    player.currentArea = player_json['currentArea']
     return player
 
 class PlayerEncoder(json.JSONEncoder):

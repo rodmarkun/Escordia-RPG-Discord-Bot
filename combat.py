@@ -68,35 +68,33 @@ class Battler:
         info_dmg = ""
         dmg = round(self.stats['atk'] * (100/(100 + defender.stats['def']*1.5)))
         # Check for critical attack
-        dmg, info_crit = self.check_critical(dmg)
+        #dmg, info_crit = self.check_critical(dmg)
+        if self.check_critical():
+            info_crit = 'Critical blow!\n'
+            dmg = dmg * 2
         # Check for missed attack
         if not check_miss(self, defender):
             info_dmg = defender.take_dmg(dmg)
         else:
             info_miss = f'{self.name}\'s attack missed!\n'
+            info_crit = ''
             dmg = 0
         return info + info_crit + info_miss + info_dmg
 
-    def check_critical(self, dmg):
+    def check_critical(self):
         '''
         Checks if an attack is critical. If it is, doubles its damage.
 
         Critical chance comes by the battler's stat: 'critCh'
 
-        Parameters:
-        dmg : int
-            Base damage dealt
-
         Returns:
-        dmg : int
-            Damage dealt (after checking and operating if critical)
+        True/False : bool
+            True if attack is critical, False if it is not
         '''
-        info = ""
         if self.stats['critCh'] > random.randint(0, 100):
-            info = 'Critical blow!\n'
-            return dmg * 2, info
+            return True
         else:
-            return dmg, info
+            return False
 
     def recover_mp(self, amount):
         '''
@@ -110,7 +108,6 @@ class Battler:
             fully_recover_mp(self)
         else:
             self.stats['mp'] += amount
-        print(f'{self.name} recovers {amount} mp!')
 
     def heal(self, amount):
         '''
@@ -124,7 +121,6 @@ class Battler:
             fully_heal(self)
         else:
             self.stats['hp'] += amount
-        print(f'{self.name} heals {amount} hp!')
 
 # Returns True if attack misses, False if it doesn't
 def check_miss(attacker, defender):
@@ -171,35 +167,35 @@ def check_turns_buffs_and_debuffs(target, deactivate):
             bd.check_turns()
 
 # Checks if a battler is dead and removes it from the appropiate lists
-def check_if_dead(allies, enemies, battlers):
-    '''
-    Checks if current battlers are dead and if they are, removes them from
-    the corresponding lists.
-
-    Parameters:
-    allies : List
-        List of ally Battlers
-    enemies : List
-        List of enemy Battlers
-    battlers : List
-        List of all battlers
-    '''
-    # TODO: This can probably be done in an easier way, but iterating
-    # while deleting objects leads to weird stuff happening.
-    dead_bodies = []
-    for ally in allies:
-        if ally.alive == False:
-            dead_bodies.append(ally)
-    for target in enemies:
-        if target.alive == False:
-            dead_bodies.append(target)
-    for dead in dead_bodies:
-        if dead in battlers:
-            battlers.remove(dead)
-        if dead in enemies:
-            enemies.remove(dead)
-        elif dead in allies:
-            allies.remove(dead)
+# def check_if_dead(allies, enemies, battlers):
+#     '''
+#     Checks if current battlers are dead and if they are, removes them from
+#     the corresponding lists.
+#
+#     Parameters:
+#     allies : List
+#         List of ally Battlers
+#     enemies : List
+#         List of enemy Battlers
+#     battlers : List
+#         List of all battlers
+#     '''
+#     # TODO: This can probably be done in an easier way, but iterating
+#     # while deleting objects leads to weird stuff happening.
+#     dead_bodies = []
+#     for ally in allies:
+#         if ally.alive == False:
+#             dead_bodies.append(ally)
+#     for target in enemies:
+#         if target.alive == False:
+#             dead_bodies.append(target)
+#     for dead in dead_bodies:
+#         if dead in battlers:
+#             battlers.remove(dead)
+#         if dead in enemies:
+#             enemies.remove(dead)
+#         elif dead in allies:
+#             allies.remove(dead)
 
 def fully_heal(target):
     '''
