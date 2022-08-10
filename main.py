@@ -4,8 +4,9 @@ from discord.ext import commands
 from StringProgressBar import progressBar
 
 import combat
-import enemies
+import inventory as player_inv
 import player
+import items
 import json
 import fight as fight_module
 import file_management
@@ -64,11 +65,21 @@ async def start(ctx):
 @bot.command()
 async def area(ctx):
     player_obj = file_management.check_if_exists(ctx.author.name)
-    current_area = areas[player_obj.currentArea - 1]
     if player_obj is None:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
     else:
+        current_area = areas[player_obj.currentArea - 1]
         await ctx.send(f'You are currently in **{current_area.name}** (area {current_area.number})\n')
+
+@bot.command()
+async def boss(ctx):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    if player_obj is None:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+    else:
+        current_area = areas[player_obj.currentArea - 1]
+        await begin_fight(ctx=ctx, player=player_obj, enemy=current_area.boss())
+
 
 @bot.command()
 async def players(ctx):
@@ -108,6 +119,26 @@ async def profile(ctx, arg=None):
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
     else:
         await ctx.send(f'User does not have a character in Escordia yet. Make sure to just type the player\'s name after !profile. You can see current players in !players')
+
+@bot.command()
+async def equip(ctx, arg=None):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    if player_obj is None:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+    else:
+        if arg is None:
+            await ctx.send(f'You need to provide the item index from your inventory to be able to equip it.')
+        else:
+            # try:
+                if len(player_obj.inventory.items) >= int(arg):
+                    info = player_obj.equip_item(player_obj.inventory.items[int(arg)-1])
+                    await ctx.send(info)
+                    file_management.delete_player(ctx.author.name)
+                    file_management.write_player(player_obj)
+                else:
+                    await ctx.send(f'There is no item with that index in your inventory.')
+            # except:
+            #     await ctx.send(f'You need to provide a valid item index')
 
 @bot.command()
 async def aptitudes(ctx, apt=None, apt_points=None):
@@ -157,19 +188,7 @@ async def fight(ctx):
     player_obj = file_management.check_if_exists(ctx.author.name)
     curr_area = areas[player_obj.currentArea - 1]
     enemy = random.choice(curr_area.enemyList)()
-
-    in_fight = file_management.check_if_in_fight(ctx.author.name)
-    if in_fight is not None:
-        await ctx.send(f'You are already in a fight against **{in_fight.enemy.name}**, {ctx.author.mention}')
-        return
-
-    if player_obj is not None:
-        fight_msg = await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=enemy, player_obj=player_obj))
-
-        fight_obj = fight_module.Fight(player=player_obj, enemy=enemy, fight_msg=fight_msg.id)
-        file_management.write_fight(fight_obj)
-    else:
-        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+    await begin_fight(ctx=ctx, player=player_obj, enemy=enemy)
 
 @bot.command()
 async def attack(ctx):
@@ -238,6 +257,46 @@ async def mana(ctx):
         file_management.write_player(player_obj)
         await ctx.send(f'{player_obj.name}, you have fully recovered your MP.')
 
+@bot.command()
+async def item_test(ctx):
+    item1 = items.longsword
+    item2 = items.dagger
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    player_obj.inventory.add_item(item1)
+    player_obj.inventory.add_item(item2)
+
+    await ctx.send(player_obj.inventory.show_inventory())
+
+    file_management.delete_player(ctx.author.name)
+    file_management.write_player(player_obj)
+
+@bot.command()
+async def inventory(ctx):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    if player_obj is not None:
+        inv_contents = player_obj.inventory.show_inventory()
+        if inv_contents:
+            await ctx.send(inv_contents)
+        else:
+            await ctx.send(f'{ctx.author.mention} your inventory is empty.')
+    else:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+
+
+async def begin_fight(ctx, player, enemy):
+    in_fight = file_management.check_if_in_fight(ctx.author.name)
+    if in_fight is not None:
+        await ctx.send(f'You are already in a fight against **{in_fight.enemy.name}**, {ctx.author.mention}')
+        return
+
+    if player is not None:
+        fight_msg = await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=enemy, player_obj=player))
+
+        fight_obj = fight_module.Fight(player=player, enemy=enemy, fight_msg=fight_msg.id)
+        file_management.write_fight(fight_obj)
+    else:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+
 def embed_fight_msg(ctx, enemy, player_obj):
     hp_bar = progressBar.filledBar(enemy.stats['maxHp'], enemy.stats['hp'], size=10)
     embed = discord.Embed(
@@ -259,18 +318,26 @@ def embed_fight_msg(ctx, enemy, player_obj):
 async def win_fight(ctx, in_fight):
     lvl_up = in_fight.player.add_exp(in_fight.enemy.xpReward)
     in_fight.player.add_money(in_fight.enemy.goldReward)
+    
+    enemy_looted = False
+    if combat.check_if_loot(in_fight.player, in_fight.enemy):
+        enemy_looted = True
+        
     file_management.delete_player(in_fight.player.name)
     file_management.write_player(in_fight.player)
     await ctx.send(
         embed=embed_victory_msg(ctx=ctx, enemy=in_fight.enemy, player_obj=in_fight.player, xp=in_fight.enemy.xpReward,
-                                gold=in_fight.enemy.goldReward))
+                                gold=in_fight.enemy.goldReward, looted=enemy_looted))
     if lvl_up:
         await ctx.send(f'{ctx.author.mention} - {lvl_up}')
 
-def embed_victory_msg(ctx, enemy, player_obj, xp, gold):
+def embed_victory_msg(ctx, enemy, player_obj, xp, gold, looted):
+    looted_str = ''
+    if looted:
+        looted_str = f'You loot **{enemy.possibleLoot["name"]}**.'
     embed = discord.Embed(
         title=f'Victory!',
-        description=f'{SPARKLER_EMOJI} **{ctx.author.name}** has slain a **{enemy.name}** {SPARKLER_EMOJI}\nYou earn {xp}xp and {gold} gold.',
+        description=f'{SPARKLER_EMOJI} **{ctx.author.name}** has slain a **{enemy.name}** {SPARKLER_EMOJI}\nYou earn {xp}xp and {gold} gold.\n' + looted_str,
         color=discord.Colour.red()
     )
     embed.set_thumbnail(url=enemy.imageUrl)

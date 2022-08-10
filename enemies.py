@@ -1,5 +1,6 @@
 from random import randint
 import combat
+import items
 
 '''
 Enemy class definitions, specially for custom stats and rewards.
@@ -15,14 +16,16 @@ class Enemy(combat.Battler):
     goldReward : int 
         Amount of gold (coins/money) given when slain
     '''
-    def __init__(self, name, stats, xpReward, goldReward, imageUrl) -> None:
+    def __init__(self, name, stats, xpReward, goldReward, possibleLoot=items.no_loot, lootChance=-1, imageUrl='') -> None:
         super().__init__(name, stats)
         self.xpReward = xpReward
         self.goldReward = goldReward
+        self.possibleLoot = possibleLoot
+        self.lootChance = lootChance
         self.imageUrl = imageUrl
 
 def createEnemy(enemy_json):
-    enemy = Enemy(enemy_json['name'], enemy_json['stats'], enemy_json['xpReward'], enemy_json['goldReward'], enemy_json['imageUrl'])
+    enemy = Enemy(enemy_json['name'], enemy_json['stats'], enemy_json['xpReward'], enemy_json['goldReward'], enemy_json['possibleLoot'], enemy_json['lootChance'], enemy_json['imageUrl'])
     return enemy
 
 # AREA 1:
@@ -40,7 +43,7 @@ class Bat(Enemy):
                  'speed': 12,
                  'critCh': 10
                  }
-        super().__init__('Bat', stats, xpReward=4, goldReward=randint(2, 5),
+        super().__init__('Bat', stats, xpReward=4, goldReward=randint(2, 5), possibleLoot=items.item_bat_wings, lootChance=60,
                          imageUrl="https://i.postimg.cc/fLsrwz3Z/Colossal-Bat.png")
 
 class Wolf(Enemy):
@@ -56,7 +59,7 @@ class Wolf(Enemy):
                     'speed' : 9,
                     'critCh' : 5
         }
-        super().__init__('Wolf', stats, xpReward=8, goldReward=randint(3, 6), imageUrl="https://i.postimg.cc/1R65TbDJ/Mountain-Wolf.png")
+        super().__init__('Wolf', stats, xpReward=8, goldReward=randint(3, 6), possibleLoot=items.item_wolf_fur, lootChance=40, imageUrl="https://i.postimg.cc/1R65TbDJ/Mountain-Wolf.png")
 
 class LionAnt(Enemy):
     def __init__(self):
@@ -71,7 +74,7 @@ class LionAnt(Enemy):
                  'speed': 7,
                  'critCh': 15
                  }
-        super().__init__('Lion Ant', stats, xpReward=5, goldReward=randint(4, 20),
+        super().__init__('Lion Ant', stats, xpReward=5, goldReward=randint(4, 20), possibleLoot=items.no_loot, lootChance=-1,
                          imageUrl="https://i.postimg.cc/tCq5Dgyc/Insects-Ant-Lion.png")
 
 class ColossalCaterpillar(Enemy):
@@ -87,7 +90,7 @@ class ColossalCaterpillar(Enemy):
                  'speed': 2,
                  'critCh': 1
                  }
-        super().__init__('Colossal Caterpillar', stats, xpReward=25, goldReward=randint(4, 20),
+        super().__init__('Colossal Caterpillar', stats, xpReward=25, goldReward=randint(4, 20), possibleLoot=items.no_loot, lootChance=-1,
                          imageUrl="https://i.postimg.cc/7PV1Cy7n/Insects-Caterpillar-A.png")
 
 class GiantDragonfly(Enemy):
@@ -103,7 +106,7 @@ class GiantDragonfly(Enemy):
                  'speed': 13,
                  'critCh': 10
                  }
-        super().__init__('Giant Dragonfly', stats, xpReward=20, goldReward=randint(12, 20),
+        super().__init__('Giant Dragonfly', stats, xpReward=20, goldReward=randint(12, 20), possibleLoot=items.item_dragonfly_wings, lootChance=50,
                          imageUrl="https://i.postimg.cc/HskwXP9D/Insects-Dragonfly-B.png")
 
 # Area 1 Boss

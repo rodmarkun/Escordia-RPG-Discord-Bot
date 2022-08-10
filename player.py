@@ -74,8 +74,10 @@ class Player(combat.Battler):
 
         self.aptitudePoints = 0  # Points for upgrading aptitudes
         self.inventory = inventory.Inventory()  # Player's inventory
-        self.equipment = {'Weapon': None,
-                          'Armor': None}  # Player's equipment, can be further expanded
+        self.equipment = {  'Helmet' : None,
+                            'Armor': None,
+                            'Weapon': None,
+                            'Accesory' : None}  # Player's equipment, can be further expanded
         self.money = 20  # Current money
         self.combos = []  # Player's selection of combos (atk, cp)
         self.spells = [skills.spellFireball]  # Player's selection of spells (matk, mp)
@@ -88,6 +90,11 @@ class Player(combat.Battler):
         self.isAlly = True  # Check if battler is an ally or not
 
     def show_info(self):
+        equipment_names ={"Helmet" : "None", "Armor" : "None", "Weapon" : "None", "Accesory" : "None"}
+        for item in self.equipment:
+            if self.equipment[item] is not None:
+                equipment_names[item] = self.equipment[item]['name']
+
         return f'**Player Name**: {self.name}\n' \
                f'**Level**: {self.lvl}\n' \
                f'**Xp**: {self.xp}\n' \
@@ -110,8 +117,10 @@ class Player(combat.Battler):
                f'**WIS**: {self.aptitudes["wis"]}\n' \
                f'**CONST**: {self.aptitudes["const"]}\n' \
                f'**---EQUIPMENT---**\n' \
-               f'**Weapon**: {self.equipment["Weapon"]}\n' \
-               f'**Armor**: {self.equipment["Armor"]}\n' \
+               f'**Helmet**: {equipment_names["Helmet"]}\n' \
+               f'**Armor**: {equipment_names["Armor"]}\n' \
+               f'**Weapon**: {equipment_names["Weapon"]}\n' \
+               f'**Accesory**: {equipment_names["Accesory"]}\n' \
                f'**----------------**\n' \
                f'**Aptitude Points**: {self.aptitudePoints}\n' \
                f'**Money**: {self.money}\n' \
@@ -123,42 +132,42 @@ class Player(combat.Battler):
         return super().normal_attack(defender)
 
 
-    # def equip_item(self, equipment):
-    #     '''
-    #     Player equips certain item. Must be of type 'Equipment'.
-    #
-    #     Parameters:
-    #     equipment : Equipment
-    #         Item to equip.
-    #     '''
-    #     if type(equipment) == inventory.Equipment:
-    #         actualEquipment = self.equipment[equipment.objectType]
-    #         if actualEquipment != None:
-    #             print(f'{actualEquipment.name} has been unequiped.')
-    #             actualEquipment.add_to_inventory(self.inventory, 1)
-    #             # Remove the combo from previous combo
-    #             if actualEquipment.combo != None:
-    #                 self.combos.remove(actualEquipment.combo)
-    #                 print(f'You can no longer use the combo: {actualEquipment.combo.name}')
-    #             # Remove stats from previous equipment
-    #             for stat in actualEquipment.statChangeList:
-    #                 self.stats[stat] -= actualEquipment.statChangeList[stat]
-    #         # Adds stats to player
-    #         for stat in equipment.statChangeList:
-    #             self.stats[stat] += equipment.statChangeList[stat]
-    #         self.equipment[equipment.objectType] = equipment.create_item(1)
-    #         # Adds equipment's combo
-    #         if equipment.combo != None and equipment.combo not in self.combos:
-    #             self.combos.append(equipment.combo)
-    #             print(f'You can now use the combo: {equipment.combo.name}')
-    #         self.inventory.decrease_item_amount(equipment, 1)
-    #         print(f'{equipment.name} has been equipped.')
-    #         print(equipment.show_stats())
-    #     else:
-    #         if equipment != None:
-    #             print('{} is not equipable.'.format(equipment.name))
-    #     text.inventory_menu()
-    #     self.inventory.show_inventory()
+    def equip_item(self, equipment):
+        '''
+        Player equips certain item. Must be of type 'Equipment'.
+    
+        Parameters:
+        equipment : Equipment
+            Item to equip.
+        '''
+        info = ''
+        if type(equipment) == inventory.Equipment:
+            actualEquipment = inventory.createItem(self.equipment[equipment.objectType])
+            if actualEquipment != None:
+                info += f'{actualEquipment.name} has been unequiped.\n'
+                self.inventory.add_item(actualEquipment)
+                # # Remove the combo from previous combo
+                # if actualEquipment.combo != None:
+                #     self.combos.remove(actualEquipment.combo)
+                #     print(f'You can no longer use the combo: {actualEquipment.combo.name}')
+                # Remove stats from previous equipment
+                for stat in actualEquipment.statChangeList:
+                    self.stats[stat] -= actualEquipment.statChangeList[stat]
+            # Adds stats to player
+            for stat in equipment.statChangeList:
+                self.stats[stat] += equipment.statChangeList[stat]
+            self.equipment[equipment.objectType] = equipment.create_item(1)
+            # Adds equipment's combo
+            # if equipment.combo != None and equipment.combo not in self.combos:
+            #     self.combos.append(equipment.combo)
+            #     print(f'You can now use the combo: {equipment.combo.name}')
+            self.inventory.decrease_item_amount(equipment, 1)
+            info += f'{equipment.name} has been equipped.'
+            print(equipment.show_stats())
+        else:
+            if equipment != None:
+                info += f'{equipment.name} is not equipable.'
+        return info
     #
     # def use_item(self, item):
     #     '''
@@ -313,7 +322,7 @@ def createPlayer(player_json):
     player.aptitudes = player_json['aptitudes']
     player.aptitudePoints = player_json['aptitudePoints']
     player.equipment = player_json['equipment']
-    player.inventory = inventory.Inventory()
+    player.inventory = inventory.createInventory(player_json['inventory'])
     player.money = player_json['money']
     player.combos = player_json['combos']
     player.spells = player_json['spells']

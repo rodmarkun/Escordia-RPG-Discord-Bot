@@ -1,5 +1,6 @@
 import random
 import math
+import inventory
 
 '''
 Parent class for all instances that can enter in combat.
@@ -216,3 +217,10 @@ def fully_recover_mp(target):
         Battler to fully recover
     '''
     target.stats['mp'] = target.stats['maxMp']
+
+def check_if_loot(player, enemy):
+    if random.randint(0, 100) <= enemy.lootChance:
+        player.inventory.add_item(inventory.createItem(enemy.possibleLoot))
+        return True
+    else:
+        return False
