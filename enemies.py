@@ -16,20 +16,22 @@ class Enemy(combat.Battler):
     goldReward : int 
         Amount of gold (coins/money) given when slain
     '''
-    def __init__(self, name, stats, xpReward, goldReward, possibleLoot=items.no_loot, lootChance=-1, imageUrl='') -> None:
+    def __init__(self, name, stats, xpReward, goldReward, possibleLoot=items.no_loot, lootChance=-1, imageUrl='', isBoss=False) -> None:
         super().__init__(name, stats)
         self.xpReward = xpReward
         self.goldReward = goldReward
         self.possibleLoot = possibleLoot
         self.lootChance = lootChance
         self.imageUrl = imageUrl
+        self.isBoss = isBoss
 
 def createEnemy(enemy_json):
-    enemy = Enemy(enemy_json['name'], enemy_json['stats'], enemy_json['xpReward'], enemy_json['goldReward'], enemy_json['possibleLoot'], enemy_json['lootChance'], enemy_json['imageUrl'])
+    enemy = Enemy(enemy_json['name'], enemy_json['stats'], enemy_json['xpReward'], enemy_json['goldReward'], enemy_json['possibleLoot'], enemy_json['lootChance'], enemy_json['imageUrl'], enemy_json['isBoss'])
     return enemy
 
 # AREA 1:
 
+    # Monsters
 class Bat(Enemy):
     def __init__(self) -> None:
         stats = {'maxHp': 15,
@@ -109,7 +111,7 @@ class GiantDragonfly(Enemy):
         super().__init__('Giant Dragonfly', stats, xpReward=20, goldReward=randint(12, 20), possibleLoot=items.item_dragonfly_wings, lootChance=50,
                          imageUrl="https://i.postimg.cc/HskwXP9D/Insects-Dragonfly-B.png")
 
-# Area 1 Boss
+    # Area 1 Boss
 class Daidarabotchi(Enemy):
     def __init__(self):
         stats = {'maxHp': 102,
@@ -125,6 +127,60 @@ class Daidarabotchi(Enemy):
                  }
         super().__init__('Daidarabotchi, Forest Guardian', stats, xpReward=304, goldReward=104,
                          imageUrl="https://i.postimg.cc/DygrbcK4/Boss-Daidarabotchi.png")
+        self.isBoss = True
+
+    # Dungeon Area 1 Monsters
+class GoblinRaider(Enemy):
+    def __init__(self):
+        stats = {'maxHp': 30,
+                 'hp': 30,
+                 'maxMp': 10,
+                 'mp': 10,
+                 'atk': 7,
+                 'def': 6,
+                 'matk': 1,
+                 'mdef': 4,
+                 'speed': 13,
+                 'critCh': 10
+                 }
+        super().__init__('Goblin Raider', stats, xpReward=30, goldReward=randint(12, 20), possibleLoot=items.no_loot, lootChance=-1,
+                         imageUrl="https://i.postimg.cc/pX2mzsxW/Goblin-Raider.png")
+
+class GoblinArcher(Enemy):
+    def __init__(self):
+        stats = {'maxHp': 25,
+                 'hp': 25,
+                 'maxMp': 10,
+                 'mp': 10,
+                 'atk': 6,
+                 'def': 4,
+                 'matk': 1,
+                 'mdef': 7,
+                 'speed': 10,
+                 'critCh': 20
+                 }
+        super().__init__('Goblin Archer', stats, xpReward=20, goldReward=randint(12, 20), possibleLoot=items.no_loot, lootChance=-1,
+                         imageUrl="https://i.postimg.cc/tTXK2ngx/Goblin-Archer.png")
+
+class GoblinElite(Enemy):
+    def __init__(self):
+        stats = {'maxHp': 40,
+                 'hp': 40,
+                 'maxMp': 10,
+                 'mp': 10,
+                 'atk': 10,
+                 'def': 7,
+                 'matk': 1,
+                 'mdef': 8,
+                 'speed': 5,
+                 'critCh': 5
+                 }
+        super().__init__('Goblin Elite', stats, xpReward=100, goldReward=randint(20, 50), possibleLoot=items.no_loot, lootChance=-1,
+                         imageUrl="https://i.postimg.cc/VvXHwY58/Goblin-Elite.png")
+        self.isBoss = True
+
 
 area_1_enemies = [Wolf, Bat, LionAnt, ColossalCaterpillar, GiantDragonfly]
 area_1_boss = Daidarabotchi
+
+dungeon_1_enemies = [GoblinRaider, GoblinArcher]

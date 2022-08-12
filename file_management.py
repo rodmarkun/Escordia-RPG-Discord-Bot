@@ -1,4 +1,5 @@
 import json
+import dungeons
 import player
 import fight as fight_module
 
@@ -29,6 +30,27 @@ def check_if_in_fight(player_name):
             res = json.loads(line)
             if res['player']['name'] == player_name:
                 return fight_module.createFight(res)
+    return None
+
+def delete_dungeon(player_name):
+    with open("dungeons.txt", "r") as file:
+        lines = file.readlines()
+    with open("dungeons.txt", "w") as file:
+        for line in lines:
+            res = json.loads(line)
+            if res['player_name'] != player_name:
+                file.write(line)
+
+def write_dungeon(dungeon_obj):
+    with open("dungeons.txt", "a") as file:
+        file.write(dungeon_obj.toJSON() + '\n')
+
+def check_if_in_dungeon(player_name):
+    with open("dungeons.txt", "r") as file:
+        for line in file:
+            res = json.loads(line)
+            if res['player_name'] == player_name:
+                return dungeons.createDungeon(res)
     return None
 
 def delete_player(player_name):

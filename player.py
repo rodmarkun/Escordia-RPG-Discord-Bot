@@ -86,6 +86,7 @@ class Player(combat.Battler):
         self.completedQuests = []
 
         self.currentArea = 1
+        self.inDungeon = False
 
         self.isAlly = True  # Check if battler is an ally or not
 
@@ -142,8 +143,8 @@ class Player(combat.Battler):
         '''
         info = ''
         if type(equipment) == inventory.Equipment:
-            actualEquipment = inventory.createItem(self.equipment[equipment.objectType])
-            if actualEquipment != None:
+            if self.equipment[equipment.objectType] is not None:
+                actualEquipment = inventory.createItem(self.equipment[equipment.objectType])
                 info += f'{actualEquipment.name} has been unequiped.\n'
                 self.inventory.add_item(actualEquipment)
                 # # Remove the combo from previous combo
@@ -330,6 +331,7 @@ def createPlayer(player_json):
     player.completedQuests = player_json['completedQuests']
     player.isAlly = player_json['isAlly']
     player.currentArea = player_json['currentArea']
+    player.inDungeon = player_json['inDungeon']
     return player
 
 class PlayerEncoder(json.JSONEncoder):

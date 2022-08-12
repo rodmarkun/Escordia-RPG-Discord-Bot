@@ -111,7 +111,7 @@ class DamageSpell(Spell):
                     for enemy in target:
                         dmg = self.power + (caster.stats['matk'] - enemy.stats['mdef'])
                         enemy.take_dmg(dmg)
-        return f"You do not have enough MP to cast {self.name}, {caster.name}"
+        return f"You do not have enough MP to cast {self.name}, {caster.name}\n"
 
 def createSpell(spell_json):
     spell = DamageSpell(spell_json['name'], spell_json['description'], spell_json['power'], spell_json['cost'], spell_json['isTargeted'], spell_json['defaultTarget'])
