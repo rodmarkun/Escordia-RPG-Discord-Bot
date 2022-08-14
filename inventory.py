@@ -19,10 +19,15 @@ class Inventory():
         '''
         index = 1
         inv_str = ""
-        for item in self.items:
-            inv_str += f'{index} - {item.show_info()}\n'
+        print(self.items)
+        for i in self.items:
+            inv_str += f'{index} - {self.items[index-1].show_info()}\n'
             index += 1
         return inv_str
+
+    def get_amount_item(self, index):
+        item = self.items[index]
+        return item.amount
 
     def drop_item(self, item_index, amount):
         '''
@@ -50,9 +55,8 @@ class Inventory():
         money_returned = 0
         if item_index <= len(self.items):
             item = self.items[item_index - 1]
-            if item.sell(amount):
-                money_returned = item.individualValue * amount
-                self.decrease_item_amount(item, amount)
+            money_returned = round(item.individualValue * amount * 0.5)
+            self.decrease_item_amount(item, amount)
         return money_returned
 
     def add_item(self, new_item):
@@ -202,34 +206,6 @@ class Item():
     #             print(f'You don\'t have that many {self.name}!')
     #     return 0, 0
 
-    # # TODO: Buy items
-    # def buy(self, player):
-    #     '''
-    #     Buys a certain amount of this item.
-
-    #     Parameters:
-    #     player : Player
-    #         Player which buys the item.
-    #     '''
-    #     if self.amount > 1:
-    #         print('How many do you want to buy?')
-    #         amountToBuy = int(input("> "))
-    #         price = self.individualValue * amountToBuy
-    #         if amountToBuy > self.amount:
-    #             print(f'The vendor does not have that many {self.name}')
-    #         elif price > player.money:
-    #             print('Not enough money!')
-    #         else:
-    #             itemForPlayer = self.create_item(amountToBuy)
-    #             self.amount -= amountToBuy
-    #             itemForPlayer.add_to_inventory_player(player.inventory)
-    #             player.money -= price
-    #     elif self.amount == 1 and self.individualValue <= player.money:
-    #         itemForPlayer = self.create_item(1)
-    #         itemForPlayer.add_to_inventory_player(player.inventory)
-    #         player.money -= self.individualValue
-    #         self.amount = 0
-
     # def create_item(self, amount):
     #     '''
     #     Creates a copy of this item with a custom "amount".
@@ -283,6 +259,16 @@ class Item():
             String with amount, name, objectType and individual value of this object.
         '''
         return f'[x{self.amount}] {self.name} ({self.objectType}) - {self.individualValue}G'
+
+    def show_info_trader(self):
+        '''
+        Shows the info of this specific object.
+
+        Returns:
+        info : str
+            String with amount, name, objectType and individual value of this object.
+        '''
+        return f'{self.name} ({self.objectType}) - {self.individualValue}G'
     
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
@@ -291,6 +277,8 @@ def createItem(item_json):
     equipable_items = ['Helmet', 'Armor', 'Weapon', 'Accesory']
     if item_json['objectType'] in equipable_items:
         item = Equipment(item_json['name'], item_json['description'], int(item_json['amount']), int(item_json['individualValue']), item_json['objectType'], item_json['statChangeList'])
+    elif item_json['objectType'] == 'Potion':
+        item = Potion(item_json['name'], item_json['description'], int(item_json['amount']), int(item_json['individualValue']), item_json['objectType'], item_json['stat'], item_json['amountToChange'])
     else:
         item = Item(item_json['name'], item_json['description'], int(item_json['amount']), int(item_json['individualValue']), item_json['objectType'])
     return item
@@ -316,6 +304,9 @@ class Equipment(Item):
         super().__init__(name, description, amount, individual_value, objectType)
         self.statChangeList = statChangeList
         #self.combo = combo
+
+    def show_info_trader(self):
+        return f'{self.name} ({self.objectType}) [{self.show_stats()}] - {self.individualValue}G'
 
     def show_info(self):
         return f'[x{self.amount}] {self.name} ({self.objectType}) [{self.show_stats()}] - {self.individualValue}G'
@@ -365,11 +356,11 @@ class Potion(Item):
         caster : Player
             Player to recover.
         '''
-        print('{} uses a {}!'.format(caster.name, self.name))
         if self.stat == 'hp':
             caster.heal(self.amountToChange)
         elif self.stat == 'mp':
             caster.recover_mp(self.amountToChange)
+        return f'{caster.name} uses a {self.name} and recovers {self.amountToChange}{self.stat}!'
 
     def create_item(self, amount):
         return Potion(self.name, self.description, amount, self.individualValue, self.objectType, self.stat,

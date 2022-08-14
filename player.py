@@ -86,6 +86,7 @@ class Player(combat.Battler):
         self.completedQuests = []
 
         self.currentArea = 1
+        self.defeatedBosses = 0
         self.inDungeon = False
 
         self.isAlly = True  # Check if battler is an ally or not
@@ -125,7 +126,18 @@ class Player(combat.Battler):
                f'**----------------**\n' \
                f'**Aptitude Points**: {self.aptitudePoints}\n' \
                f'**Money**: {self.money}\n' \
-               f'**Current area**: {self.currentArea}\n'
+               f'**Bosses Defeated**: {self.defeatedBosses}\n'
+
+
+    def show_aptitudes(self):
+        return f'**STR**: {self.aptitudes["str"]} - [+2 ATK]\n' \
+               f'**DEX**: {self.aptitudes["dex"]} - [+1 ATK, +1 SPEED, +1 CRITCH]\n' \
+               f'**INT**: {self.aptitudes["int"]} - [+2 MATK]\n' \
+               f'**WIS**: {self.aptitudes["wis"]} - [+3 MAXMP, +2 MDEF]\n' \
+               f'**CONST**: {self.aptitudes["const"]} - [+2 MAXHP, +2 DEF]\n\n' \
+               f'To upgrade an aptitude, use `!aptitudes [aptitude_name] [points]`\n' \
+               f'Example: `!aptitudes dex 1`\n' \
+               f'You currently have {self.aptitudePoints} aptitude points.'
 
 
     def normal_attack(self, defender):
@@ -169,21 +181,22 @@ class Player(combat.Battler):
             if equipment != None:
                 info += f'{equipment.name} is not equipable.'
         return info
-    #
-    # def use_item(self, item):
-    #     '''
-    #     Uses a certain item. Item must be in the "usable_items" list
-    #     to be used.
-    #
-    #     Parameters:
-    #     item : Item
-    #         Item to be used.
-    #     '''
-    #     usable_items = [inventory.Potion, inventory.Grimoire]
-    #     if type(item) in usable_items:
-    #         item.activate(self)
-    #     text.inventory_menu()
-    #     self.inventory.show_inventory()
+
+    def use_item(self, item):
+        '''
+        Uses a certain item. Item must be in the "usable_items" list
+        to be used.
+
+        Parameters:
+        item : Item
+            Item to be used.
+        '''
+        usable_items = [inventory.Potion, inventory.Grimoire]
+        info = 'That item is not usable.'
+        if type(item) in usable_items:
+            info = item.activate(self)
+        self.inventory.decrease_item_amount(item, 1)
+        return info
 
     def add_exp(self, exp):
         '''
@@ -220,7 +233,6 @@ class Player(combat.Battler):
             Amount of money to be added.
         '''
         self.money += money
-        print(f"You earn {money} coins")
 
     # def assign_aptitude_points(self):
     #     '''
@@ -256,18 +268,19 @@ class Player(combat.Battler):
             Aptitude to be upgraded.
         '''
         if aptitude == 'str':
-            self.stats['atk'] += points
+            self.stats['atk'] += 2 * points
         elif aptitude == 'dex':
+            self.stats['atk'] += points
             self.stats['speed'] += points
             self.stats['critCh'] += points
         elif aptitude == 'int':
-            self.stats['matk'] += points
+            self.stats['matk'] += 2 * points
         elif aptitude == 'wis':
             self.stats['maxMp'] += 3 * points
-            self.stats['mdef'] += points
+            self.stats['mdef'] += 2 * points
         elif aptitude == 'const':
             self.stats['maxHp'] += 2 * points
-            self.stats['def'] += points
+            self.stats['def'] += 2 * points
 
     # def buy_from_vendor(self, vendor):
     #     '''
@@ -331,6 +344,7 @@ def createPlayer(player_json):
     player.completedQuests = player_json['completedQuests']
     player.isAlly = player_json['isAlly']
     player.currentArea = player_json['currentArea']
+    player.defeatedBosses = player_json['defeatedBosses']
     player.inDungeon = player_json['inDungeon']
     return player
 

@@ -72,7 +72,7 @@ class Battler:
         #dmg, info_crit = self.check_critical(dmg)
         if self.check_critical():
             info_crit = 'Critical blow!\n'
-            dmg = dmg * 2
+            dmg = round(dmg * 1.5)
         # Check for missed attack
         if not check_miss(self, defender):
             info_dmg = defender.take_dmg(dmg)
