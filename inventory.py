@@ -10,7 +10,8 @@ class Inventory():
         List of current items in the inventory
     '''
 
-    def __init__(self) -> None:
+    def __init__(self, player_name) -> None:
+        self.player_name = player_name
         self.items = []
 
     def show_inventory(self):
@@ -134,7 +135,7 @@ class Inventory():
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
 
 def createInventory(inv_json):
-    inv = Inventory()
+    inv = Inventory(inv_json['player_name'])
     for item in inv_json['items']:
         item_obj = createItem(item)
         inv.add_item(item_obj)

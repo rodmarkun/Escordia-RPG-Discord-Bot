@@ -1,1 +1,0 @@
-{"name": "Goblins Den", "enemy_rooms": 0, "loot_rooms": 0, "player_name": "CodeC", "dungeon_number": 1}

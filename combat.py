@@ -167,37 +167,6 @@ def check_turns_buffs_and_debuffs(target, deactivate):
         for bd in target.buffsAndDebuffs:
             bd.check_turns()
 
-# Checks if a battler is dead and removes it from the appropiate lists
-# def check_if_dead(allies, enemies, battlers):
-#     '''
-#     Checks if current battlers are dead and if they are, removes them from
-#     the corresponding lists.
-#
-#     Parameters:
-#     allies : List
-#         List of ally Battlers
-#     enemies : List
-#         List of enemy Battlers
-#     battlers : List
-#         List of all battlers
-#     '''
-#     # TODO: This can probably be done in an easier way, but iterating
-#     # while deleting objects leads to weird stuff happening.
-#     dead_bodies = []
-#     for ally in allies:
-#         if ally.alive == False:
-#             dead_bodies.append(ally)
-#     for target in enemies:
-#         if target.alive == False:
-#             dead_bodies.append(target)
-#     for dead in dead_bodies:
-#         if dead in battlers:
-#             battlers.remove(dead)
-#         if dead in enemies:
-#             enemies.remove(dead)
-#         elif dead in allies:
-#             allies.remove(dead)
-
 def fully_heal(target):
     '''
     Fully heals a target.

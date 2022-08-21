@@ -1,5 +1,6 @@
 import json
 import dungeons
+import inventory
 import player
 import time
 import fight as fight_module
@@ -12,7 +13,13 @@ def check_if_exists(player_name):
             if res['name'] == player_name:
                 end_time = time.time() * 1000
                 print(f'CHECK_IF_EXISTS TIME: {start_time-end_time}')
-                return player.createPlayer(res)
+                player_obj = player.createPlayer(res)
+    with open("inventory.txt", "r") as file:
+        for line in file:
+            res = json.loads(line)
+            if res['player_name'] == player_name:
+                player_obj.inventory = inventory.createInventory(res)
+                return player_obj
     return None
 
 def delete_fight(player_name):
@@ -69,12 +76,40 @@ def delete_player(player_name):
             res = json.loads(line)
             if res['name'] != player_name:
                 file.write(line)
+    delete_inventory(player_name)
     end_time = time.time() * 1000
     print(f'DELETE_PLAYER TIME: {end_time - start_time}')
+
+def delete_inventory(player_name):
+    with open("inventory.txt", "r") as file:
+        lines = file.readlines()
+    with open("inventory.txt", "w") as file:
+        for line in lines:
+            res = json.loads(line)
+            if res['player_name'] != player_name:
+                file.write(line)
+
+def write_inventory(player_obj):
+    with open("inventory.txt", "a") as file:
+        file.write(player_obj.inventory.toJSON() + '\n')
 
 def write_player(player_obj):
     start_time = time.time() * 1000
     with open("players.txt", "a") as file:
         file.write(player_obj.toJSON() + '\n')
+    write_inventory(player_obj)
     end_time = time.time() * 1000
     print(f'WRITE_PLAYER TIME: {end_time - start_time}')
+
+def update_player(player_obj):
+    with open("players.txt", "r") as file:
+        lines = file.readlines()
+    with open("players.txt", "w") as file:
+        for line in lines:
+            res = json.loads(line)
+            if res['name'] != player_obj.name:
+                file.write(line)
+            else:
+                file.write(player_obj.toJSON() + '\n')
+    delete_inventory(player_obj.name)
+    write_inventory(player_obj)

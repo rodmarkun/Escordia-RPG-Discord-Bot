@@ -1,58 +1,37 @@
+# Imports
+
 import discord
 import os
+import json
+import file_management
+import random
+import combat as combat_module
+import player as player_module
+import dungeons as dungeons_module
+import fight as fight_module
+import emojis as emojis_module
+import shop as shop_module
+import skills as skills_module
+import text as text_module
+import area as area_module
+
 from discord.ext import commands
 from StringProgressBar import progressBar
 
-import combat
-import inventory as player_inv
-import player
-import items
-import json
-import dungeons
-import fight as fight_module
-import emojis
-import shop as shop_module
-import file_management
-import random
-from area import areas
-
-import skills
-
+# Discord token from VENV
 DISCORD_TOKEN = os.environ.get('DISCORD_TOKEN')
-ENEMY = 'Wolf'
 
+# Bot initialization
 intents = discord.Intents.all()
 activity = discord.Activity(type=discord.ActivityType.watching, name="!help")
 bot = commands.Bot(command_prefix='!', intents=intents, activity=activity)
 bot.remove_command('help')
-
 shop_obj = shop_module.Shop()
 
+# !help command
 @bot.command()
 async def help(ctx):
-    command_string = f'{emojis.STAR_EMOJI} **General** {emojis.STAR_EMOJI}\n' \
-                     '`!help` - Display all commands\n' \
-                     '`!start` - Create a player in Escordia RPG\n' \
-                     '`!players` - Show all players of Escordia RPG\n' \
-                     f'{emojis.CHARACTER_EMOJI} **Character** {emojis.CHARACTER_EMOJI}\n' \
-                     '`!profile` - Check your current profile and stats\n' \
-                     '`!profile [player name]` - Show profile of a certain player\n' \
-                     '`!rest` - Fully recover your HP and MP. Has a 30min cooldown.\n' \
-                     '`!inn` - Fully recover your HP and MP, for a reasonable price.\n' \
-                     '`!inventory` - Show all items from your inventory\n' \
-                     '`!equip [item_index]` - Equip an item from your inventory\n' \
-                     '`!spells` - See a list with all of your spells\n' \
-                     '`!aptitudes` - Show your current aptitudes\n' \
-                     '`!aptitudes [aptitude] [points]` - Spend points on upgrading aptitudes\n' \
-                     f'{emojis.COIN_EMOJI} **Economy** {emojis.COIN_EMOJI}\n' \
-                     '`!shop` - Buy items from the store\n' \
-                     '`!sell [item_index] [quantity]` - Sell items from your inventory at 50% its price value\n' \
-                     f'{emojis.DAGGER_EMOJI} **Combat** {emojis.DAGGER_EMOJI}\n' \
-                     '`!area` - Show info about your current area \n' \
-                     '`!fight` - Fight against a monster in your area\n' \
-                     '`!dungeon` - Show all dungeons in this area\n' \
-                     '`!attack` - Perform a normal attack against your opponent\n' \
-                     '`!spells [number]` - Cast a certain spell\n'
+    command_string = text_module.help_text
     embed = discord.Embed(
         title='Bot Commands',
         description= command_string,
@@ -60,15 +39,15 @@ async def help(ctx):
     )
     await ctx.send(embed=embed)
 
+# !start command
 @bot.command()
 async def start(ctx):
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
         await ctx.send(f'You already have a character in the world of Escordia, {ctx.author.mention}.')
     else:
-        create_player = player.Player(ctx.author.name)
-        with open("players.txt", "a") as file:
-            file.write(create_player.toJSON() + '\n')
+        create_player = player_module.Player(ctx.author.name)
+        file_management.write_player(create_player)
         await ctx.send(f'Welcome, {ctx.author.mention}, to the world of Escordia.')
 
 @bot.command()
@@ -79,12 +58,8 @@ async def area(ctx, arg=0):
     else:
         try:
             if arg == 0:
-                areas_txt = ''
-                i = 1
-                for a in areas:
-                    areas_txt += f'{i} - {a.name}\n'
-                    i += 1
-                current_area = areas[player_obj.currentArea - 1]
+                current_area = area_module.areas[player_obj.currentArea - 1]
+                areas_txt = area_module.show_areas()
                 areas_txt += f'\nYou are currently in **{current_area.name}** (area {current_area.number})\n'
                 embed = discord.Embed(
                     title=f'Areas',
@@ -103,7 +78,7 @@ async def area(ctx, arg=0):
                         else:
                             await ctx.send(f'{ctx.author.mention} you are already in area {arg}')
                     else:
-                        await ctx.send(f'{ctx.author.mention} you first need to defeat the !boss of al previous areas.')
+                        await ctx.send(f'{ctx.author.mention} you first need to defeat the `!boss` of al previous areas.')
                 else:
                     await ctx.send(f'{ctx.author.mention} you cannot travel while you are in a dungeon.')
         except:
@@ -116,11 +91,10 @@ async def boss(ctx):
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
     else:
         if file_management.check_if_in_fight(player_obj.name) is None or not player_obj.inDungeon:
-            current_area = areas[player_obj.currentArea - 1]
+            current_area = area_module.areas[player_obj.currentArea - 1]
             await begin_fight(ctx=ctx, player=player_obj, enemy=current_area.boss())
         else:
             await ctx.send(f'{ctx.author.mention} you cannot fight a boss while already in a fight or in a dungeon.')
-
 
 @bot.command()
 async def players(ctx):
@@ -146,7 +120,7 @@ async def profile(ctx, arg=None):
             if arg is not None:
                 search = arg
             if res['name'] == search:
-                player_obj = player.createPlayer(res)
+                player_obj = player_module.createPlayer(res)
                 embed = discord.Embed(
                     title=f'Profile - {player_obj.name}',
                     description=player_obj.show_info(),
@@ -174,8 +148,7 @@ async def equip(ctx, arg=None):
                 if len(player_obj.inventory.items) >= int(arg):
                     info = player_obj.equip_item(player_obj.inventory.items[int(arg)-1])
                     await ctx.send(info)
-                    file_management.delete_player(ctx.author.name)
-                    file_management.write_player(player_obj)
+                    file_management.update_player(player_obj)
                 else:
                     await ctx.send(f'There is no item with that index in your inventory.')
              except:
@@ -194,8 +167,7 @@ async def use(ctx, arg=None):
                 if len(player_obj.inventory.items) >= int(arg):
                     info = player_obj.use_item(player_obj.inventory.items[int(arg)-1])
                     await ctx.send(info)
-                    file_management.delete_player(ctx.author.name)
-                    file_management.write_player(player_obj)
+                    file_management.update_player(player_obj)
                 else:
                     await ctx.send(f'There is no item with that index in your inventory.')
              except:
@@ -225,8 +197,7 @@ async def aptitudes(ctx, apt=None, apt_points=None):
                         player_obj.aptitudes[apt.lower()] += int(apt_points)
                         player_obj.update_stats_to_aptitudes(apt.lower(), int(apt_points))
                         player_obj.aptitudePoints -= int(apt_points)
-                        file_management.delete_player(ctx.author.name)
-                        file_management.write_player(player_obj)
+                        file_management.update_player(player_obj)
                         await ctx.send(f'{ctx.author.mention} you have succesfully upgraded your {apt.lower()} to {player_obj.aptitudes[apt.lower()]}')
                 except:
                     await ctx.send(f'Something went wrong. Are you sure you typed the aptitude correctly, {ctx.author.mention}?')
@@ -236,12 +207,15 @@ async def aptitudes(ctx, apt=None, apt_points=None):
 @bot.command()
 async def fight(ctx):
     player_obj = file_management.check_if_exists(ctx.author.name)
-    if file_management.check_if_in_fight(ctx.author.name) is None or not player_obj.inDungeon:
-        curr_area = areas[player_obj.currentArea - 1]
-        enemy = random.choice(curr_area.enemyList)()
-        await begin_fight(ctx=ctx, player=player_obj, enemy=enemy)
+    if player_obj is not None:
+        if file_management.check_if_in_fight(ctx.author.name) is None or not player_obj.inDungeon:
+            curr_area = area_module.areas[player_obj.currentArea - 1]
+            enemy = random.choice(curr_area.enemyList)()
+            await begin_fight(ctx=ctx, player=player_obj, enemy=enemy)
+        else:
+            await ctx.send(f'{ctx.author.mention} you cannot fight while already in a fight or in a dungeon.')
     else:
-        await ctx.send(f'{ctx.author.mention} you cannot fight while already in a fight or in a dungeon.')
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
 
 @bot.command()
 async def attack(ctx):
@@ -253,8 +227,7 @@ async def attack(ctx):
         fight_text = in_fight.normal_attack()
         await ctx.send(fight_text)
 
-        file_management.delete_player(ctx.author.name)
-        file_management.write_player(in_fight.player)
+        file_management.update_player(in_fight.player)
 
         file_management.delete_fight(ctx.author.name)
         if not in_fight.enemy.alive:
@@ -267,7 +240,7 @@ async def attack(ctx):
 async def dungeon(ctx, arg=None):
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
-        curr_area = areas[player_obj.currentArea - 1]
+        curr_area = area_module.areas[player_obj.currentArea - 1]
         if arg is None:
             dungeons_txt = ''
             i = 1
@@ -287,17 +260,16 @@ async def dungeon(ctx, arg=None):
                 if not player_obj.inDungeon:
                     try:
                         area_dungeon = curr_area.dungeons[int(arg)-1]
-                        dungeon_obj = dungeons.Dungeon(area_dungeon.name, area_dungeon.enemies, area_dungeon.loot_pool, area_dungeon.boss, area_dungeon.max_enemy_rooms, area_dungeon.max_loot_rooms, player_obj.name, area_dungeon.dungeon_number, area_dungeon.recommended_lvl)
+                        dungeon_obj = dungeons_module.Dungeon(area_dungeon.name, area_dungeon.enemies, area_dungeon.loot_pool, area_dungeon.boss, area_dungeon.max_enemy_rooms, area_dungeon.max_loot_rooms, player_obj.name, area_dungeon.dungeon_number, area_dungeon.recommended_lvl)
                     
                         player_obj.inDungeon = True
-                        file_management.delete_player(player_obj.name)
-                        file_management.write_player(player_obj)
+                        file_management.update_player(player_obj)
                         await dungeon_room(ctx, dungeon_obj, player_obj)
                     except:
-                        await ctx.send(f'Wrong command, {ctx.author.name}. You first need to choose a dungeon, example: !dungeon 1.')
+                        await ctx.send(f'Wrong command, {ctx.author.name}. You first need to choose a dungeon, example: `!dungeon 1`.')
                 else:
                     if arg != "next":
-                        await ctx.send(f'You are already in a dungeon! Use [!dungeon next]')
+                        await ctx.send(f'You are already in a dungeon! Use `!dungeon next`')
                     else:
                         dungeon_obj = file_management.check_if_in_dungeon(ctx.author.name)
                         await dungeon_room(ctx, dungeon_obj, player_obj)
@@ -321,7 +293,7 @@ async def spells(ctx, arg=0):
         else:
             fight_obj = file_management.check_if_in_fight(ctx.author.name)
             if fight_obj is not None:
-                spell = skills.createSpell(fight_obj.player.spells[arg-1])
+                spell = skills_module.createSpell(fight_obj.player.spells[arg-1])
                 info_str = fight_obj.spell(spell)
                 file_management.delete_fight(ctx.author.name)
                 await ctx.send(info_str)
@@ -342,10 +314,9 @@ async def rest(ctx):
     in_fight = file_management.check_if_in_fight(ctx.author.name)
 
     if in_fight is None and player_obj is not None and not player_obj.inDungeon:
-        combat.fully_heal(player_obj)
-        combat.fully_recover_mp(player_obj)
-        file_management.delete_player(player_obj.name)
-        file_management.write_player(player_obj)
+        combat_module.fully_heal(player_obj)
+        combat_module.fully_recover_mp(player_obj)
+        file_management.update_player(player_obj)
         await ctx.send(f'{player_obj.name}, you are now rested and have recovered all your HP and MP.')
     elif in_fight is not None:
         await ctx.send(f'{ctx.author.mention}, you need to be out of combat.')
@@ -364,40 +335,23 @@ async def inn(ctx):
         else:
             await ctx.send(f'{ctx.author.mention}, you are now rested and have recovered all your HP and MP. The Inn\'s fee is {cost}G.')
             player_obj.money -= cost
-            combat.fully_heal(player_obj)
-            combat.fully_recover_mp(player_obj)
-            file_management.delete_player(player_obj.name)
-            file_management.write_player(player_obj)
+            combat_module.fully_heal(player_obj)
+            combat_module.fully_recover_mp(player_obj)
+            file_management.update_player(player_obj)
     elif in_fight is not None:
         await ctx.send(f'{ctx.author.mention}, you need to be out of combat.')
     elif player_obj.inDungeon:
         await ctx.send(f'{ctx.author.mention}, you cannot rest inside a dungeon.')
 
-@commands.cooldown(1, 20, commands.BucketType.user)
-@bot.command()
-async def mana(ctx):
-    player_obj = file_management.check_if_exists(ctx.author.name)
-    in_fight = file_management.check_if_in_fight(ctx.author.name)
-
-    if in_fight is None and player_obj is not None and not player_obj.inDungeon:
-        combat.fully_recover_mp(player_obj)
-        file_management.delete_player(player_obj.name)
-        file_management.write_player(player_obj)
-        await ctx.send(f'{player_obj.name}, you have fully recovered your MP.')
-    elif in_fight is not None:
-        await ctx.send(f'{ctx.author.mention}, you need to be out of combat.')
-    elif player_obj.inDungeon:
-        await ctx.send(f'{ctx.author.mention}, you cannot recover MP inside a dungeon.')
-
 @bot.command()
 async def inventory(ctx):
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
-        inv_contents = player_obj.inventory.show_inventory() + f'\n\nType `!use [item_number]` to use a certain item.\nType `!equip [item_number]` to equip a certain item.\nType`!sell [item_index] [quantity]` to sell items from your inventory at 50% its price value\n'
+        inv_contents = player_obj.inventory.show_inventory()
         if inv_contents:
             embed = discord.Embed(
                 title=f'{ctx.author.name}\'s Inventory',
-                description=inv_contents,
+                description=inv_contents + f'\n\nType `!use [item_number]` to use a certain item.\nType `!equip [item_number]` to equip a certain item.\nType`!sell [item_index] [quantity]` to sell items from your inventory at 50% its price value\n',
                 color=discord.Colour.red()
             )
             await ctx.send(embed=embed)
@@ -428,8 +382,7 @@ async def shop(ctx, arg=0, quant=1):
                         player_obj.money -= item_to_purchase.individualValue * quant
                         await ctx.send(f'You have successfully purchased x{quant} {item_to_purchase.name} for {item_to_purchase.individualValue * quant}G')
 
-                        file_management.delete_player(player_obj.name)
-                        file_management.write_player(player_obj)
+                        file_management.update_player(player_obj)
                     else:
                         await ctx.send(f'You do not have enough money, {ctx.author.mention}')
                 else:
@@ -454,8 +407,7 @@ async def sell(ctx, arg=0, amount=1):
                     player_obj.money += sell_value
                     await ctx.send(f'{ctx.author.mention}, you have sold {amount} {item_name}(s) for {sell_value}.')
 
-                    file_management.delete_player(player_obj.name)
-                    file_management.write_player(player_obj)
+                    file_management.update_player(player_obj)
                 else:
                     await ctx.send(f'{ctx.author.mention}, you do not have that many {item_name}.')
         else:
@@ -501,9 +453,9 @@ def embed_fight_msg(ctx, enemy, player_obj):
         description=f'You are fighting a **{enemy.name}**.\n'
                     f'HP: {hp_bar[0]} - {enemy.stats["hp"]}/{enemy.stats["maxHp"]}\n'
                     f'What will you do?\n\n'
-                    f'{emojis.RED_CIRCLE_EMOJI} Attack - !attack\n'
-                    f'{emojis.RED_CIRCLE_EMOJI} Spells - !spells\n'
-                    f'{emojis.RED_CIRCLE_EMOJI} Combos - !combos',
+                    f'{emojis_module.RED_CIRCLE_EMOJI} Attack - !attack\n'
+                    f'{emojis_module.RED_CIRCLE_EMOJI} Spells - !spells\n'
+                    f'{emojis_module.RED_CIRCLE_EMOJI} Combos - !combos',
         color=discord.Colour.red()
     )
     embed.set_thumbnail(url=enemy.imageUrl)
@@ -523,23 +475,20 @@ async def dungeon_room(ctx, dungeon_obj, player_obj):
 
         await ctx.send(f'{ctx.author.mention}While traversing the dungeon, you find a {item.name}!')
 
-        file_management.delete_player(ctx.author.name)
-        file_management.write_player(player_obj)
+        file_management.update_player(player_obj)
         file_management.delete_dungeon(ctx.author.name)
         file_management.write_dungeon(dungeon_obj)
     elif (curr_room == "Enemy" or curr_room == "Loot" and dungeon_obj.loot_rooms == 0) and dungeon_obj.enemy_rooms > 0:
         dungeon_obj.enemy_rooms -= 1
         enemy = random.choice(dungeon_obj.enemies)()
         await begin_fight(ctx, player_obj, enemy)
-        file_management.delete_player(ctx.author.name)
-        file_management.write_player(player_obj)
+        file_management.update_player(player_obj)
         file_management.delete_dungeon(ctx.author.name)
         file_management.write_dungeon(dungeon_obj)
     elif dungeon_obj.loot_rooms == 0 and dungeon_obj.enemy_rooms == 0:
         await begin_fight(ctx, player_obj, dungeon_obj.boss())
         file_management.delete_dungeon(ctx.author.name)
-        file_management.delete_player(ctx.author.name)
-        file_management.write_player(player_obj)
+        file_management.update_player(player_obj)
         print(f'END: {player_obj.inDungeon}')
 
 async def win_fight(ctx, in_fight):
@@ -547,7 +496,7 @@ async def win_fight(ctx, in_fight):
     in_fight.player.add_money(in_fight.enemy.goldReward)
     
     enemy_looted = False
-    if combat.check_if_loot(in_fight.player, in_fight.enemy):
+    if combat_module.check_if_loot(in_fight.player, in_fight.enemy):
         enemy_looted = True
 
     await ctx.send(
@@ -563,8 +512,7 @@ async def win_fight(ctx, in_fight):
         in_fight.player.inDungeon = False
         await ctx.send(f'Congratulations {ctx.author.mention}, you have completed this dungeon.')
 
-    file_management.delete_player(in_fight.player.name)
-    file_management.write_player(in_fight.player)
+    file_management.update_player(in_fight.player)
     if lvl_up:
         await ctx.send(f'{ctx.author.mention} - {lvl_up}')
 
@@ -574,7 +522,7 @@ def embed_victory_msg(ctx, enemy, player_obj, xp, gold, looted):
         looted_str = f'\nYou loot **{enemy.possibleLoot["name"]}**.'
     embed = discord.Embed(
         title=f'Victory!',
-        description=f'{emojis.SPARKLER_EMOJI} **{ctx.author.name}** has slain a **{enemy.name}** {emojis.SPARKLER_EMOJI}\nYou earn {xp}xp and {gold} gold.\n' + looted_str,
+        description=f'{emojis_module.SPARKLER_EMOJI} **{ctx.author.name}** has slain a **{enemy.name}** {emojis_module.SPARKLER_EMOJI}\nYou earn {xp}xp and {gold} gold.\n' + looted_str,
         color=discord.Colour.red()
     )
     embed.set_thumbnail(url=enemy.imageUrl)

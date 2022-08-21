@@ -73,7 +73,7 @@ class Player(combat.Battler):
                           }
 
         self.aptitudePoints = 0  # Points for upgrading aptitudes
-        self.inventory = inventory.Inventory()  # Player's inventory
+        self.inventory = inventory.Inventory(self.name)  # Player's inventory
         self.equipment = {  'Helmet' : None,
                             'Armor': None,
                             'Weapon': None,
@@ -81,9 +81,6 @@ class Player(combat.Battler):
         self.money = 20  # Current money
         self.combos = []  # Player's selection of combos (atk, cp)
         self.spells = [skills.spellFireball]  # Player's selection of spells (matk, mp)
-
-        self.activeQuests = []
-        self.completedQuests = []
 
         self.currentArea = 1
         self.defeatedBosses = 0
@@ -323,7 +320,24 @@ class Player(combat.Battler):
         self.comboPoints += points
 
     def toJSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
+        player_data = { "name" : self.name,
+                        "stats" : self.stats,
+                        "lvl" : self.lvl,
+                        "xp" : self.xp,
+                        "alive" : self.alive,
+                        "xpToNextLvl" : self.xpToNextLvl,
+                        "comboPoints" : self.comboPoints,
+                        "aptitudes" : self.aptitudes,
+                        "aptitudePoints" : self.aptitudePoints,
+                        "equipment" : self.equipment,
+                        "money" : self.money,
+                        "isAlly" : self.isAlly,
+                        "currentArea" : self.currentArea,
+                        "defeatedBosses" : self.defeatedBosses,
+                        "inDungeon" : self.inDungeon,
+                        "combos" : self.combos,
+                        "spells" : self.spells}
+        return json.dumps(player_data, default=lambda o: o.__dict__, sort_keys=True)
 
 def createPlayer(player_json):
     player = Player(player_json['name'])
@@ -336,12 +350,7 @@ def createPlayer(player_json):
     player.aptitudes = player_json['aptitudes']
     player.aptitudePoints = player_json['aptitudePoints']
     player.equipment = player_json['equipment']
-    player.inventory = inventory.createInventory(player_json['inventory'])
     player.money = player_json['money']
-    player.combos = player_json['combos']
-    player.spells = player_json['spells']
-    player.activeQuests = player_json['activeQuests']
-    player.completedQuests = player_json['completedQuests']
     player.isAlly = player_json['isAlly']
     player.currentArea = player_json['currentArea']
     player.defeatedBosses = player_json['defeatedBosses']
