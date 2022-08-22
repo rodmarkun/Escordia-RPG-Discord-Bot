@@ -90,7 +90,7 @@ class Player(combat.Battler):
                f'**Helmet**: {equipment_names["Helmet"]}\n' \
                f'**Armor**: {equipment_names["Armor"]}\n' \
                f'**Weapon**: {equipment_names["Weapon"]}\n' \
-               f'**Accesory**: {equipment_names["Accesory"]}\n' \
+               f'**Accesory**: {equipment_names["Accessory"]}\n' \
                f'**----------------**\n' \
                f'**Aptitude Points**: {self.aptitudePoints}\n' \
                f'**Money**: {self.money}\n' \
