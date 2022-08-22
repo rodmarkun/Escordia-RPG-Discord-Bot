@@ -1,4 +1,6 @@
 import json
+import skills
+import emojis
 
 class Inventory():
     '''
@@ -6,6 +8,8 @@ class Inventory():
     It is also used for shops.
 
     Attributes:
+    player_name : String
+        Owner's name of the inventory
     items : List
         List of current items in the inventory
     '''
@@ -16,23 +20,35 @@ class Inventory():
 
     def show_inventory(self):
         '''
-        Shows all items from the inventory (indexed).
+        Shows all items from inventory, indexed
+
+        :return: inv_str: String which contains all items from inventory
         '''
         index = 1
         inv_str = ""
-        print(self.items)
+
         for i in self.items:
-            inv_str += f'{index} - {self.items[index-1].show_info()}\n'
+            inv_str += f'{index} - {emojis.obj_to_emoji[self.items[index-1].objectType]} {self.items[index-1].show_info()}\n'
             index += 1
         return inv_str
 
     def get_amount_item(self, index):
+        '''
+        Gets the amount of X item in the inventory
+
+        :param index: Index of item
+        :return: Amount of that item
+        '''
         item = self.items[index]
         return item.amount
 
     def drop_item(self, item_index, amount):
         '''
-        Drops a certain item from the inventory.
+        Drops an item from the inventory
+
+        :param item_index: Index of item
+        :param amount: Amount to drop
+        :return: Info string
         '''
         if item_index <= len(self.items):
             item = self.items[item_index - 1]
@@ -47,11 +63,11 @@ class Inventory():
 
     def sell_item(self, item_index, amount):
         '''
-        Sells an item from the inventory.
+        Sells an item from the inventory
 
-        Returns:
-        money_returned : int
-            Amount of money for item(s) sold.
+        :param item_index: Index of item to sell
+        :param amount: Amount to sell
+        :return: Money returned
         '''
         money_returned = 0
         if item_index <= len(self.items):
@@ -61,6 +77,11 @@ class Inventory():
         return money_returned
 
     def add_item(self, new_item):
+        '''
+        Adds an item to the inventory or increments its amount if it already was in the inventory
+
+        :param new_item: Item to be added
+        '''
         alreadyInInventory = False
         for item in self.items:
             if item.name == new_item.name:
@@ -72,12 +93,10 @@ class Inventory():
         
     def equip_item(self, item_index):
         '''
-        Selects and equips a certain item from inventory (must be type 'Equipment').
+        Checks if an item from the inventory is equipable
 
-        Returns:
-        item : Item
-            Returns the item for the player to equip. Returns None if it chose
-            a non-equipable object.
+        :param item_index: Index of item to equip
+        :return: Item
         '''
         if item_index <= len(self.items):
             item = self.items[item_index- 1]
@@ -87,43 +106,12 @@ class Inventory():
                 print('Please choose an equipable object.')
                 return None
 
-    # TODO: Consumible items
-    # def use_item(self):
-    #     '''
-    #     Selects and uses a certain item from inventory (must be type 'Consumable').
-
-    #     Returns:
-    #     item : Item
-    #         Returns the item for the player to use. Returns None if it chose
-    #         a non-consumable object
-    #     '''
-    #     print('\nWhich item do you want to use? ["0" to Quit]')
-    #     self.show_inventory()
-    #     i = int(input("> "))
-    #     if i == 0:
-    #         print('Closing inventory...')
-    #         return None
-    #     elif i <= len(self.items):
-    #         item = self.items[i - 1]
-    #         if item.objectType == 'Consumable':
-    #             item.amount -= 1
-    #             if item.amount <= 0:
-    #                 self.items.pop(i - 1)
-    #             return item
-    #         else:
-    #             print('Please choose a consumable object.')
-    #             return None
-
     def decrease_item_amount(self, item, amount):
         '''
-        Decreases a certain amount of a certain item in this inventory.
-        This was made because of the shop system.
+        Decreases X amount of a certain item
 
-        Parameters:
-        item : Item
-            Item to decrease the amount from
-        amount : int
-            Amount to decrease
+        :param item: Item to decrease
+        :param amount: Amount to decrease
         '''
         for actualItem in self.items:
             if item.name == actualItem.name:
@@ -161,95 +149,13 @@ class Item():
         Object type
     '''
 
-    # TODO: Change Object Type to inheritance
+
     def __init__(self, name, description, amount, individualValue, objectType) -> None:
         self.name = name
         self.description = description
         self.amount = amount
         self.individualValue = individualValue
         self.objectType = objectType
-
-    def drop(self, amount) -> bool:
-        '''
-        Drops a certain amount of this item. Dropped items can never be recovered.
-        '''
-        if amount > self.amount:
-            return False
-        else:
-            self.amount -= amount
-            return True
-
-    # # TODO: Sell items
-    # def sell(self):
-    #     '''
-    #     Sells a certain amount of this item. Sold items can never be recovered.
-
-    #     Returns:
-    #     moneyToReceive : int
-    #         Amount of money to receive for selling X amount of this item.
-    #     amountToSell : int
-    #         Amount of this item to be sold.
-    #     '''
-    #     if self.amount >= 1:
-    #         print('How many do you want to sell?')
-    #         amountToSell = int(input("> "))
-    #         if amountToSell <= self.amount and amountToSell > 0:
-    #             # Items sell for 50% the value they are worth for
-    #             moneyToReceive = int(round(self.individualValue * 0.5 * amountToSell))
-    #             print(f'Are you sure you want to sell {amountToSell} {self.name} for {moneyToReceive}G? [y/n]')
-    #             confirmation = input("> ")
-    #             if confirmation == 'y':
-    #                 print(f'{amountToSell} {self.name} sold for {moneyToReceive}')
-    #                 return moneyToReceive, amountToSell
-    #             else:
-    #                 pass
-    #         else:
-    #             print(f'You don\'t have that many {self.name}!')
-    #     return 0, 0
-
-    # def create_item(self, amount):
-    #     '''
-    #     Creates a copy of this item with a custom "amount".
-    #     This was added for the shop system.
-
-    #     Parameters:
-    #     amount : int
-    #         Amount for the created item to have.
-    #     '''
-    #     return Item(self.name, self.description, amount, self.individualValue, self.objectType)
-
-    def add_to_inventory_player(self, inventory):
-        '''
-        Adds the item to the player's inventory.
-
-        Parameters:
-        inventory : Inventory
-            Inventory of the player.
-        '''
-        amountAdded = self.amount
-        self.add_to_inventory(inventory, amountAdded)
-        print(f'{amountAdded} {self.name} was added to your inventory!')
-
-    def add_to_inventory(self, inventory, amount):
-        '''
-        Adds certain amount of this item to an inventory.
-        Made specially for the shop system.
-
-        Parameters:
-        inventory : Inventory
-            Inventory in which the item will be added.
-        amount : int
-            Amount of the item to add
-        '''
-        alreadyInInventory = False
-        for item in inventory.items:
-            if self.name == item.name:
-                item.amount += amount
-                alreadyInInventory = True
-                break
-        if not alreadyInInventory:
-            self.amount = amount
-            inventory.items.append(self)
 
     def show_info(self):
         '''
@@ -259,7 +165,7 @@ class Item():
         info : str
             String with amount, name, objectType and individual value of this object.
         '''
-        return f'[x{self.amount}] {self.name} ({self.objectType}) - {self.individualValue}G'
+        return f'[x{self.amount}] **{self.name}** ({self.objectType}) - {self.individualValue}G'
 
     def show_info_trader(self):
         '''
@@ -269,17 +175,19 @@ class Item():
         info : str
             String with amount, name, objectType and individual value of this object.
         '''
-        return f'{self.name} ({self.objectType}) - {self.individualValue}G'
+        return f'**{self.name}** ({self.objectType}) - {self.individualValue}G'
     
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
 
 def createItem(item_json):
-    equipable_items = ['Helmet', 'Armor', 'Weapon', 'Accesory']
+    equipable_items = ['Helmet', 'Armor', 'Weapon', 'Accessory']
     if item_json['objectType'] in equipable_items:
         item = Equipment(item_json['name'], item_json['description'], int(item_json['amount']), int(item_json['individualValue']), item_json['objectType'], item_json['statChangeList'])
     elif item_json['objectType'] == 'Potion':
         item = Potion(item_json['name'], item_json['description'], int(item_json['amount']), int(item_json['individualValue']), item_json['objectType'], item_json['stat'], item_json['amountToChange'])
+    elif item_json['objectType'] == 'Grimoire':
+        item = Grimoire(item_json['name'], item_json['description'], int(item_json['amount']), int(item_json['individualValue']), item_json['objectType'], item_json['spell'])
     else:
         item = Item(item_json['name'], item_json['description'], int(item_json['amount']), int(item_json['individualValue']), item_json['objectType'])
     return item
@@ -297,20 +205,17 @@ class Equipment(Item):
         'speed' : -2
         }
         This would increase hp by 3, atk by 2 and decrease speed by 2.
-    combo : Combo
-        Combo this equipment gives access to.
     '''
 
     def __init__(self, name, description, amount, individual_value, objectType, statChangeList) -> None:
         super().__init__(name, description, amount, individual_value, objectType)
         self.statChangeList = statChangeList
-        #self.combo = combo
 
     def show_info_trader(self):
-        return f'{self.name} ({self.objectType}) [{self.show_stats()}] - {self.individualValue}G'
+        return f'**{self.name}** ({self.objectType}) [{self.show_stats()}] - {self.individualValue}G'
 
     def show_info(self):
-        return f'[x{self.amount}] {self.name} ({self.objectType}) [{self.show_stats()}] - {self.individualValue}G'
+        return f'[x{self.amount}] **{self.name}** ({self.objectType}) [{self.show_stats()}] - {self.individualValue}G'
 
     def show_stats(self):
         '''
@@ -390,15 +295,17 @@ class Grimoire(Item):
             Player which learns the spell.
         '''
         alreadyLearnt = False
+        spell_learnt = skills.createSpell(self.spell)
         for skill in caster.spells:
-            if skill.name == self.spell.name:
+            if skill['name'] == spell_learnt.name:
                 alreadyLearnt = True
                 break
         if alreadyLearnt:
-            print('You already know this spell.')
+            return 'You already know this spell.'
         else:
-            print(f'Using a \"{self.name}\" you have learnt to cast: \"{self.spell.name}\"!')
-            caster.spells.append(self.spell)
+            caster.spells.append(spell_learnt)
+            print(caster.spells)
+            return f'Using a \"{self.name}\" you have learnt to cast: \"{spell_learnt.name}\"!'
 
     def create_item(self, amount):
         return Grimoire(self.name, self.description, amount, self.individualValue, self.objectType, self.spell)

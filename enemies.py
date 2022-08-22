@@ -15,6 +15,14 @@ class Enemy(combat.Battler):
         Amount of xp (Experience Points) given when slain
     goldReward : int 
         Amount of gold (coins/money) given when slain
+    possibleLoot : Item
+        Item(s) the enemy can drop when defeated
+    lootChance : int
+        Chance to get the loot
+    imageUrl : String
+        URL of enemy's image
+    isBoss : Bool
+        Whether the enemy is a boss or not
     '''
     def __init__(self, name, stats, xpReward, goldReward, possibleLoot=items.no_loot, lootChance=-1, imageUrl='', isBoss=False) -> None:
         super().__init__(name, stats)
@@ -72,7 +80,7 @@ class LionAnt(Enemy):
                  'atk': 5,
                  'def': 7,
                  'matk': 1,
-                 'mdef': 1,
+                 'mdef': 3,
                  'speed': 7,
                  'critCh': 15
                  }
@@ -104,7 +112,7 @@ class GiantDragonfly(Enemy):
                  'atk': 7,
                  'def': 3,
                  'matk': 1,
-                 'mdef': 1,
+                 'mdef': 3,
                  'speed': 13,
                  'critCh': 10
                  }
@@ -139,7 +147,7 @@ class GoblinRaider(Enemy):
                  'atk': 7,
                  'def': 7,
                  'matk': 1,
-                 'mdef': 4,
+                 'mdef': 5,
                  'speed': 13,
                  'critCh': 10
                  }
@@ -171,7 +179,7 @@ class GoblinElite(Enemy):
                  'atk': 10,
                  'def': 7,
                  'matk': 1,
-                 'mdef': 8,
+                 'mdef': 9,
                  'speed': 5,
                  'critCh': 5
                  }
@@ -207,7 +215,7 @@ class RogueMonk(Enemy):
                  'atk': 10,
                  'def': 13,
                  'matk': 1,
-                 'mdef': 10,
+                 'mdef': 11,
                  'speed': 13,
                  'critCh': 15
                  }
@@ -223,7 +231,7 @@ class RogueAssasin(Enemy):
                  'atk': 12,
                  'def': 7,
                  'matk': 1,
-                 'mdef': 4,
+                 'mdef': 7,
                  'speed': 22,
                  'critCh': 25
                  }
@@ -255,7 +263,7 @@ class MountainHarpy(Enemy):
                  'atk': 12,
                  'def': 5,
                  'matk': 1,
-                 'mdef': 5,
+                 'mdef': 10,
                  'speed': 25,
                  'critCh': 10
                  }
@@ -290,7 +298,7 @@ class SkeletonGuard(Enemy):
                  'atk': 11,
                  'def': 9,
                  'matk': 1,
-                 'mdef': 4,
+                 'mdef': 10,
                  'speed': 15,
                  'critCh': 10
                  }
@@ -306,7 +314,7 @@ class SkeletonHero(Enemy):
                  'atk': 14,
                  'def': 6,
                  'matk': 1,
-                 'mdef': 4,
+                 'mdef': 8,
                  'speed': 20,
                  'critCh': 10
                  }
@@ -338,8 +346,8 @@ class SkeletonDragon(Enemy):
                  'atk': 12,
                  'def': 14,
                  'matk': 1,
-                 'mdef': 14,
-                 'speed': 5,
+                 'mdef': 15,
+                 'speed': 10,
                  'critCh': 15
                  }
         super().__init__('Skeleton Dragon', stats, xpReward=300, goldReward=randint(100, 180), possibleLoot=items.no_loot, lootChance=-1,
@@ -354,9 +362,9 @@ class BlackAntKnight(Enemy):
                  'maxMp': 10,
                  'mp': 10,
                  'atk': 13,
-                 'def': 10,
+                 'def': 12,
                  'matk': 1,
-                 'mdef': 7,
+                 'mdef': 10,
                  'speed': 15,
                  'critCh': 10
                  }
@@ -370,9 +378,9 @@ class BlackAntBerserker(Enemy):
                  'maxMp': 10,
                  'mp': 10,
                  'atk': 14,
-                 'def': 10,
+                 'def': 12,
                  'matk': 1,
-                 'mdef': 6,
+                 'mdef': 10,
                  'speed': 5,
                  'critCh': 1
                  }
@@ -404,7 +412,7 @@ class BlackAntProtector(Enemy):
                  'atk': 7,
                  'def': 18,
                  'matk': 1,
-                 'mdef': 10,
+                 'mdef': 13,
                  'speed': 5,
                  'critCh': 1
                  }
@@ -420,7 +428,7 @@ class BlackAntQueen(Enemy):
                  'atk': 18,
                  'def': 12,
                  'matk': 1,
-                 'mdef': 10,
+                 'mdef': 12,
                  'speed': 20,
                  'critCh': 10
                  }

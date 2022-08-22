@@ -58,10 +58,6 @@ class Battler:
         Parameters:
         defender : Battler
             Defending battler
-
-        Returns:
-        dmg : int
-            Damage dealt to defender
         '''
         info = f'{self.name} attacks!\n'
         info_crit = ""
@@ -79,12 +75,11 @@ class Battler:
         else:
             info_miss = f'{self.name}\'s attack missed!\n'
             info_crit = ''
-            dmg = 0
         return info + info_crit + info_miss + info_dmg
 
     def check_critical(self):
         '''
-        Checks if an attack is critical. If it is, doubles its damage.
+        Checks if an attack is critical. If it is, increments its damage.
 
         Critical chance comes by the battler's stat: 'critCh'
 
@@ -188,6 +183,13 @@ def fully_recover_mp(target):
     target.stats['mp'] = target.stats['maxMp']
 
 def check_if_loot(player, enemy):
+    '''
+    Checks if player gets to loot the enemy
+
+    :param player: Player that slain the enemy
+    :param enemy: Enemy to loot
+    :return: True/False whether the player gets to loot the enemy or not
+    '''
     if random.randint(0, 100) <= enemy.lootChance:
         player.inventory.add_item(inventory.createItem(enemy.possibleLoot))
         return True

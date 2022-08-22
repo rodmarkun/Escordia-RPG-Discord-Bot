@@ -1,1 +1,1 @@
-{"items": [{"amount": 2, "description": "", "individualValue": 5, "name": "Bat wings", "objectType": "Drop"}], "player_name": "RodmarKun"}
+{"items": [], "player_name": "RodmarKun"}

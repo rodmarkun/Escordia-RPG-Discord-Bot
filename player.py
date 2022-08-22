@@ -8,42 +8,8 @@ import skills
 
 class Player(combat.Battler):
     '''
-    Main class for player handling. Includes all information about stats
-    and progression made throughout the game.
-
-    Attributes:
-    lvl : int
-        Player's current level. Starts in 1 by default.
-    xp : int
-        Player's current xp (Experience Points).
-    xpToNextLvl : int
-        Necessary amount of xp to reach next level.
-    comboPoints : int
-        Amount of current Combo Points (CP).
-    aptitudes : Dictionary
-        Dictionary for handling the aptitude system. Each aptitude grants
-        stat bonuses:
-            STR -> ATK + 1
-            DEX -> SPD + 1, CRIT + 1
-            INT -> MATK + 1
-            WIS -> MP + 5
-            CONST -> MAXHP + 5
-    aptitudePoints : int
-        Amount of points for upgrading aptitudes.
-    inventory : Inventory
-        Player's inventory.
-    equipment : Dictionary
-        Dictionary that defines current player's equipment.
-    money : int
-        Current amount of money (gold/coins).
-    combos : List
-        List of combos the user is capable to use.
-    spells : List
-        List of spells the user is capable to use.
-    activeQuests : List
-        List of active Quests.
-    completedQuests : List
-        List of completed Quests
+    Player class which will hold all the info across the game. Will be stored in "players.txt" and the inventory
+    will be stored in "inventory.txt"
     '''
 
     def __init__(self, name) -> None:
@@ -77,10 +43,10 @@ class Player(combat.Battler):
         self.equipment = {  'Helmet' : None,
                             'Armor': None,
                             'Weapon': None,
-                            'Accesory' : None}  # Player's equipment, can be further expanded
+                            'Accessory' : None}  # Player's equipment, can be further expanded
         self.money = 20  # Current money
         self.combos = []  # Player's selection of combos (atk, cp)
-        self.spells = [skills.spellFireball]  # Player's selection of spells (matk, mp)
+        self.spells = []  # Player's selection of spells (matk, mp)
 
         self.currentArea = 1
         self.defeatedBosses = 0
@@ -89,7 +55,12 @@ class Player(combat.Battler):
         self.isAlly = True  # Check if battler is an ally or not
 
     def show_info(self):
-        equipment_names ={"Helmet" : "None", "Armor" : "None", "Weapon" : "None", "Accesory" : "None"}
+        '''
+        Shows all the current info (profile) about the player.
+
+        :return: Info string
+        '''
+        equipment_names ={"Helmet" : "None", "Armor" : "None", "Weapon" : "None", "Accessory" : "None"}
         for item in self.equipment:
             if self.equipment[item] is not None:
                 equipment_names[item] = self.equipment[item]['name']
@@ -127,6 +98,11 @@ class Player(combat.Battler):
 
 
     def show_aptitudes(self):
+        '''
+        Shows current player's aptitudes
+
+        :return: Info string
+        '''
         return f'**STR**: {self.aptitudes["str"]} - [+2 ATK]\n' \
                f'**DEX**: {self.aptitudes["dex"]} - [+1 ATK, +1 SPEED, +1 CRITCH]\n' \
                f'**INT**: {self.aptitudes["int"]} - [+2 MATK]\n' \
@@ -136,8 +112,12 @@ class Player(combat.Battler):
                f'Example: `!aptitudes dex 1`\n' \
                f'You currently have {self.aptitudePoints} aptitude points.'
 
-
     def normal_attack(self, defender):
+        '''
+        Performs a normal attack, same as Battler's but adding a Combo Point.
+        :param defender:
+        :return:
+        '''
         self.addComboPoints(1)
         return super().normal_attack(defender)
 
@@ -156,26 +136,19 @@ class Player(combat.Battler):
                 actualEquipment = inventory.createItem(self.equipment[equipment.objectType])
                 info += f'{actualEquipment.name} has been unequiped.\n'
                 self.inventory.add_item(actualEquipment)
-                # # Remove the combo from previous combo
-                # if actualEquipment.combo != None:
-                #     self.combos.remove(actualEquipment.combo)
-                #     print(f'You can no longer use the combo: {actualEquipment.combo.name}')
-                # Remove stats from previous equipment
                 for stat in actualEquipment.statChangeList:
                     self.stats[stat] -= actualEquipment.statChangeList[stat]
+
             # Adds stats to player
             for stat in equipment.statChangeList:
                 self.stats[stat] += equipment.statChangeList[stat]
             self.equipment[equipment.objectType] = equipment.create_item(1)
-            # Adds equipment's combo
-            # if equipment.combo != None and equipment.combo not in self.combos:
-            #     self.combos.append(equipment.combo)
-            #     print(f'You can now use the combo: {equipment.combo.name}')
+
             self.inventory.decrease_item_amount(equipment, 1)
             info += f'{equipment.name} has been equipped.'
             print(equipment.show_stats())
         else:
-            if equipment != None:
+            if equipment is not None:
                 info += f'{equipment.name} is not equipable.'
         return info
 
@@ -218,7 +191,7 @@ class Player(combat.Battler):
             self.aptitudePoints += 1
             combat.fully_heal(self)
             combat.fully_recover_mp(self)
-            lvl_up_str = f"Level up! You are now level {self.lvl}. You have {self.aptitudePoints} aptitude points"
+            lvl_up_str = f"Level up! You are now level {self.lvl}. Your HP and MP have been restored. You now have {self.aptitudePoints} aptitude points"
         return lvl_up_str
 
     def add_money(self, money):
@@ -231,31 +204,6 @@ class Player(combat.Battler):
         '''
         self.money += money
 
-    # def assign_aptitude_points(self):
-    #     '''
-    #     Menu for upgrading aptitudes.
-    #     '''
-    #     optionsDictionary = {'1': 'str',
-    #                          '2': 'dex',
-    #                          '3': 'int',
-    #                          '4': 'wis',
-    #                          '5': 'const'}
-    #     text.showAptitudes(self)
-    #     option = input("> ")
-    #     while option.lower() != 'q':
-    #         try:
-    #             if self.aptitudePoints >= 1:
-    #                 aptitudeToAssign = optionsDictionary[option]
-    #                 self.aptitudes[aptitudeToAssign] += 1
-    #                 print(f'{aptitudeToAssign} is now {self.aptitudes[aptitudeToAssign]}!')
-    #                 self.update_stats_to_aptitudes(aptitudeToAssign)
-    #                 self.aptitudePoints -= 1
-    #             else:
-    #                 print('Not enough points!')
-    #         except:
-    #             print('Please enter a valid number')
-    #         option = input("> ")
-
     def update_stats_to_aptitudes(self, aptitude, points):
         '''
         Assigns the corresponding stat points when upgrading aptitudes.
@@ -263,6 +211,8 @@ class Player(combat.Battler):
         Parameters:
         aptitude : str
             Aptitude to be upgraded.
+        points : int
+            Points used to upgrade
         '''
         if aptitude == 'str':
             self.stats['atk'] += 2 * points
@@ -278,36 +228,6 @@ class Player(combat.Battler):
         elif aptitude == 'const':
             self.stats['maxHp'] += 2 * points
             self.stats['def'] += 2 * points
-
-    # def buy_from_vendor(self, vendor):
-    #     '''
-    #     Buys an item from a vendor.
-    #
-    #     Parameters:
-    #     vendor : Shop
-    #         Shop where the player is going to buy.
-    #     '''
-    #     text.shop_buy(self)
-    #     vendor.inventory.show_inventory()
-    #     i = int(input("> "))
-    #     while i != 0:
-    #         if i <= len(vendor.inventory.items) and i > 0:
-    #             vendor.inventory.items[i - 1].buy(self)
-    #             if vendor.inventory.items[i - 1].amount <= 0:
-    #                 vendor.inventory.items.pop(i - 1)
-    #             vendor.inventory.show_inventory()
-    #             i = int(input("> "))
-    #
-    # def show_quests(self):
-    #     '''
-    #     Shows current quests, active and completed.
-    #     '''
-    #     print('/// ACTIVE ///')
-    #     for actq in self.activeQuests:
-    #         actq.show_info()
-    #     print('/// COMPLETED ///')
-    #     for cmpq in self.completedQuests:
-    #         cmpq.show_info()
 
     def addComboPoints(self, points):
         '''
@@ -355,6 +275,8 @@ def createPlayer(player_json):
     player.currentArea = player_json['currentArea']
     player.defeatedBosses = player_json['defeatedBosses']
     player.inDungeon = player_json['inDungeon']
+    player.spells = player_json['spells']
+    player.combos = player_json['combos']
     return player
 
 class PlayerEncoder(json.JSONEncoder):

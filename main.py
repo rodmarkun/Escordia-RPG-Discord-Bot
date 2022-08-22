@@ -3,6 +3,8 @@
 import discord
 import os
 import json
+
+import emojis
 import file_management
 import random
 import combat as combat_module
@@ -12,6 +14,7 @@ import fight as fight_module
 import emojis as emojis_module
 import shop as shop_module
 import skills as skills_module
+import text
 import text as text_module
 import area as area_module
 
@@ -39,7 +42,6 @@ async def help(ctx):
     )
     await ctx.send(embed=embed)
 
-# !start command
 @bot.command()
 async def start(ctx):
     player_obj = file_management.check_if_exists(ctx.author.name)
@@ -48,7 +50,16 @@ async def start(ctx):
     else:
         create_player = player_module.Player(ctx.author.name)
         file_management.write_player(create_player)
-        await ctx.send(f'Welcome, {ctx.author.mention}, to the world of Escordia.')
+        await ctx.send(f'Welcome, {ctx.author.mention}, to the world of Escordia. We recommend you to play the `!tutorial`.')
+
+@bot.command()
+async def tutorial(ctx):
+    embed = discord.Embed(
+        title=f'Tutorial',
+        description=text.tutorial_1,
+        color=discord.Colour.red()
+    )
+    await ctx.send(embed=embed)
 
 @bot.command()
 async def area(ctx, arg=0):
@@ -127,7 +138,7 @@ async def profile(ctx, arg=None):
                     color = discord.Colour.red()
                 )
                 fetched_user = discord.utils.get(ctx.guild.members, name=search)
-                embed.set_image(url=fetched_user.avatar_url)
+                embed.set_image(url=fetched_user.avatar.url)
                 await ctx.send(embed=embed)
                 return
     if arg is None:
@@ -163,15 +174,12 @@ async def use(ctx, arg=None):
         if arg is None:
             await ctx.send(f'You need to provide the item index from your inventory to be able to use it.')
         else:
-             try:
                 if len(player_obj.inventory.items) >= int(arg):
                     info = player_obj.use_item(player_obj.inventory.items[int(arg)-1])
                     await ctx.send(info)
                     file_management.update_player(player_obj)
                 else:
                     await ctx.send(f'There is no item with that index in your inventory.')
-             except:
-                 await ctx.send(f'You need to provide a valid item index')
 
 @bot.command()
 async def aptitudes(ctx, apt=None, apt_points=None):
@@ -185,7 +193,7 @@ async def aptitudes(ctx, apt=None, apt_points=None):
                 description=player_obj.show_aptitudes(),
                 color=discord.Colour.red()
             )
-            embed.set_image(url=ctx.author.avatar_url)
+            embed.set_image(url=ctx.author.avatar.url)
             await ctx.send(embed=embed)
         elif apt is not None and apt_points is not None:
             if file_management.check_if_in_fight(ctx.author.name) is None:
@@ -208,7 +216,7 @@ async def aptitudes(ctx, apt=None, apt_points=None):
 async def fight(ctx):
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
-        if file_management.check_if_in_fight(ctx.author.name) is None or not player_obj.inDungeon:
+        if file_management.check_if_in_fight(ctx.author.name) is None and not player_obj.inDungeon:
             curr_area = area_module.areas[player_obj.currentArea - 1]
             enemy = random.choice(curr_area.enemyList)()
             await begin_fight(ctx=ctx, player=player_obj, enemy=enemy)
@@ -260,7 +268,7 @@ async def dungeon(ctx, arg=None):
                 if not player_obj.inDungeon:
                     try:
                         area_dungeon = curr_area.dungeons[int(arg)-1]
-                        dungeon_obj = dungeons_module.Dungeon(area_dungeon.name, area_dungeon.enemies, area_dungeon.loot_pool, area_dungeon.boss, area_dungeon.max_enemy_rooms, area_dungeon.max_loot_rooms, player_obj.name, area_dungeon.dungeon_number, area_dungeon.recommended_lvl)
+                        dungeon_obj = dungeons_module.Dungeon(area_dungeon.name, area_dungeon.enemies, area_dungeon.loot_pool, area_dungeon.boss, area_dungeon.min_enemy_rooms, area_dungeon.min_loot_rooms, area_dungeon.max_enemy_rooms, area_dungeon.max_loot_rooms, player_obj.name, area_dungeon.dungeon_number, area_dungeon.recommended_lvl)
                     
                         player_obj.inDungeon = True
                         file_management.update_player(player_obj)
@@ -459,7 +467,7 @@ def embed_fight_msg(ctx, enemy, player_obj):
         color=discord.Colour.red()
     )
     embed.set_thumbnail(url=enemy.imageUrl)
-    embed.set_image(url=ctx.author.avatar_url)
+    embed.set_image(url=ctx.author.avatar.url)
     embed.set_footer(
         text=f'{player_obj.name}\nHP: {player_obj.stats["hp"]}/{player_obj.stats["maxHp"]} | {player_hp_bar[0]}\nMP: {player_obj.stats["mp"]}/{player_obj.stats["maxMp"]} | {player_mp_bar[0]}')
     return embed
@@ -473,8 +481,13 @@ async def dungeon_room(ctx, dungeon_obj, player_obj):
         item = (random.choice(dungeon_obj.loot_pool).create_item(1))
         player_obj.inventory.add_item(item)
 
-        await ctx.send(f'{ctx.author.mention}While traversing the dungeon, you find a {item.name}!')
-
+        desc = f'{ctx.author.mention}While traversing the dungeon, you find a {emojis.obj_to_emoji[item.objectType]} {item.name}!'
+        embed = discord.Embed(
+            title=f'{emojis.ESC_CHEST_ICON} Treasure!',
+            description=desc,
+            color=discord.Colour.red()
+        )
+        await ctx.send(embed=embed)
         file_management.update_player(player_obj)
         file_management.delete_dungeon(ctx.author.name)
         file_management.write_dungeon(dungeon_obj)
@@ -526,7 +539,7 @@ def embed_victory_msg(ctx, enemy, player_obj, xp, gold, looted):
         color=discord.Colour.red()
     )
     embed.set_thumbnail(url=enemy.imageUrl)
-    embed.set_image(url=ctx.author.avatar_url)
+    embed.set_image(url=ctx.author.avatar.url)
     return embed
 
 bot.run(DISCORD_TOKEN)

@@ -1,17 +1,19 @@
 import inventory
 
 # Enemy loot
+import skills
+
 no_loot = inventory.Item("", '', 0, 0, "")
 
     # Area 1 Monsters
-item_wolf_fur = inventory.Item("Wolf Fur", "", 1, 7, "Drop")
-item_bat_wings = inventory.Item("Bat wings", "", 1, 5, "Drop")
-item_dragonfly_wings = inventory.Item("Dragonfly wings", "", 1, 7, "Drop")
+item_wolf_fur = inventory.Item("Wolf Fur", "", 1, 7, "Material")
+item_bat_wings = inventory.Item("Bat wings", "", 1, 5, "Material")
+item_dragonfly_wings = inventory.Item("Dragonfly wings", "", 1, 7, "Material")
 
     # Area 2 Monsters
-item_rogue_badge = inventory.Item("Rogue Badge", "", 1, 25, "Drop")
-item_harpy_feather = inventory.Item("Harpy Feather", "", 1, 18, "Drop")
-item_earthworm_tooth = inventory.Item("Earthworm tooth", "", 1, 20, "Drop")
+item_rogue_badge = inventory.Item("Rogue Badge", "", 1, 25, "Material")
+item_harpy_feather = inventory.Item("Harpy Feather", "", 1, 18, "Material")
+item_earthworm_tooth = inventory.Item("Earthworm tooth", "", 1, 20, "Material")
 
 # Weapons
 
@@ -69,12 +71,12 @@ helmet_spikyHelmet = inventory.Equipment('Spiky Helmet', '', 1, 200, 'Helmet', {
 helmet_necromancerMask = inventory.Equipment('Necromancer Mask', '', 1, 220, 'Helmet', {'maxHp' : 2, 'def' : 3, 'matk' : 2})
 helmet_cultistHat = inventory.Equipment('Cultist Hat', '', 1, 220, 'Helmet', {'maxHp' : 1, 'def' : 4, 'maxMp' : 5})
 
-# Accesories
+# Accessories
 
     # Dungeon 01 Area 1
-acc_copperRing = inventory.Equipment('Copper Ring', '', 1, 60, 'Accesory', {'def' : 2})
-acc_crystalRing = inventory.Equipment('Crystal Ring', '', 1, 60, 'Accesory', {'matk' : 1, 'maxMp' : 2})
-acc_shapphireRing = inventory.Equipment('Shapphire Ring', '', 1, 150, 'Accesory', {'maxMp' : 10})
+acc_copperRing = inventory.Equipment('Copper Ring', '', 1, 60, 'Accessory', {'def' : 2})
+acc_crystalRing = inventory.Equipment('Crystal Ring', '', 1, 60, 'Accessory', {'matk' : 1, 'maxMp' : 2})
+acc_shapphireRing = inventory.Equipment('Shapphire Ring', '', 1, 150, 'Accessory', {'maxMp' : 10})
 
 
     # Dungeon 02 Area 2
@@ -86,11 +88,20 @@ acc_thiefBandana = inventory.Equipment('Thief Bandana', '', 1, 220, 'Accesory', 
     # Shop Area 2
 potion_smallHpPotion = inventory.Potion('Small HP Potion', '', 1, 120, 'Potion', 'hp', 15)
 
+# Grimoires
+
+    # Shop Area 1
+grimoire_smallFireBall = inventory.Grimoire('Grimoire: Small Fireball', '', 1, 30, 'Grimoire', skills.spellSmallFireball)
+
+    # Dungeon 01 Area 1
+grimoire_fireball = inventory.Grimoire('Grimoire: Fireball', '', 1, 120, 'Grimoire', skills.spellFireball)
+grimoire_smallBlessing = inventory.Grimoire('Grimoire: Small Blessing', '', 1, 130, 'Grimoire', skills.spellSmallBlessing)
+
 # Shop Lists
     # Area 1
-area1_shop_list = [weapon_rustySword, weapon_brokenDagger, weapon_oldStaff, armor_noviceArmor, armor_oldRobes]
-area2_shop_list = [weapon_huntingBow, weapon_scimitar, weapon_battleAxe, weapon_priestStaff, armor_chainmail, armor_priestRobes, armor_adventurerArmor, helmet_bronzeHelmet, helmet_studentHat, acc_copperRing, acc_crystalRing, potion_smallHpPotion]
+area1_shop_list = [weapon_rustySword, weapon_brokenDagger, weapon_oldStaff, armor_noviceArmor, armor_oldRobes, grimoire_smallFireBall]
+area2_shop_list = [weapon_huntingBow, weapon_scimitar, weapon_battleAxe, weapon_priestStaff, armor_chainmail, armor_priestRobes, armor_adventurerArmor, helmet_bronzeHelmet, helmet_studentHat, acc_copperRing, acc_crystalRing, potion_smallHpPotion, grimoire_fireball]
 
 # Loot Lists
-dungeon_area_1_loot = [weapon_longsword, weapon_dagger, weapon_staff, armor_clothArmor, armor_bronzeArmor, armor_studentRobes, helmet_bronzeHelmet, helmet_studentHat, acc_copperRing, acc_crystalRing, acc_shapphireRing]
-dungeon_area_2_loot = [weapon_boneDagger, weapon_necromancerStaff, weapon_ancientWarhammer, weapon_skeletonAxe, weapon_lichScythe, armor_necromancerRobes, armor_skeletonKnightArmor, helmet_spikyHelmet, helmet_necromancerMask, helmet_cultistHat, acc_necromancerRing, acc_thiefBandana, potion_smallHpPotion]
+dungeon_area_1_loot = [weapon_longsword, weapon_dagger, weapon_staff, armor_clothArmor, armor_bronzeArmor, armor_studentRobes, helmet_bronzeHelmet, helmet_studentHat, acc_copperRing, acc_crystalRing, acc_shapphireRing, grimoire_fireball, grimoire_smallBlessing]
+dungeon_area_2_loot = [weapon_boneDagger, weapon_necromancerStaff, weapon_ancientWarhammer, weapon_skeletonAxe, weapon_lichScythe, armor_necromancerRobes, armor_skeletonKnightArmor, helmet_spikyHelmet, helmet_necromancerMask, helmet_cultistHat, acc_necromancerRing, acc_thiefBandana, potion_smallHpPotion, grimoire_smallBlessing]

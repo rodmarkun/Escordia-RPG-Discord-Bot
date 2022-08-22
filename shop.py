@@ -1,5 +1,5 @@
 import items
-import inventory
+import emojis
 
 class Shop:
 
@@ -10,7 +10,7 @@ class Shop:
         items_txt = ''
         index = 1
         for item in self.items_by_area[player.currentArea]:
-            items_txt += f'{index} - {item.show_info_trader()}\n'
+            items_txt += f'{index} - {emojis.obj_to_emoji[item.objectType]} {item.show_info_trader()}\n'
             index += 1
         return items_txt
 
