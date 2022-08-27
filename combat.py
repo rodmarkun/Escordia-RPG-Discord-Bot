@@ -77,6 +77,28 @@ class Battler:
             info_crit = ''
         return info + info_crit + info_miss + info_dmg
 
+    def magic_attack(self, defender):
+        '''
+            Magic attacks mage enemies perform.
+
+            Parameters:
+            defender : Battler
+                Defending battler
+        '''
+        info = f'{self.name} performs a magic attack!\n'
+        info_miss = ""
+        info_dmg = ""
+        dmg = round(self.stats['matk'] * (100 / (100 + defender.stats['mdef'] * 1.5)))
+        # Check for critical attack
+        # dmg, info_crit = self.check_critical(dmg)
+        # Check for missed attack
+        if not check_miss(self, defender):
+            info_dmg = defender.take_dmg(dmg)
+        else:
+            info_miss = f'{self.name}\'s magic attack missed!\n'
+            info_crit = ''
+        return info + info_miss + info_dmg
+
     def check_critical(self):
         '''
         Checks if an attack is critical. If it is, increments its damage.

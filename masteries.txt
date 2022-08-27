@@ -1,0 +1,1 @@
+{"name": "RodmarKun", "masteries": {"Swords": {"lvl": 2, "xp": 40, "xpToNextLvl": 325}, "Axes & Hammers": {"lvl": 2, "xp": 210, "xpToNextLvl": 325}, "Daggers": {"lvl": 3, "xp": 79, "xpToNextLvl": 712}, "Bows": {"lvl": 3, "xp": 133, "xpToNextLvl": 712}, "Staffs & Scythes": {"lvl": 3, "xp": 409, "xpToNextLvl": 712}}}

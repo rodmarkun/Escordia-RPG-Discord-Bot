@@ -28,7 +28,10 @@ class Inventory():
         inv_str = ""
 
         for i in self.items:
-            inv_str += f'{index} - {emojis.obj_to_emoji[self.items[index-1].objectType]} {self.items[index-1].show_info()}\n'
+            if self.items[index-1].objectType != 'Weapon':
+                inv_str += f'{index} - {emojis.obj_to_emoji[self.items[index-1].objectType]} {self.items[index-1].show_info()}\n'
+            else:
+                inv_str += f'{index} - {emojis.weapon_to_emoji[self.items[index - 1].objectSubType]} {self.items[index - 1].show_info()}\n'
             index += 1
         return inv_str
 
@@ -183,7 +186,7 @@ class Item():
 def createItem(item_json):
     equipable_items = ['Helmet', 'Armor', 'Weapon', 'Accessory']
     if item_json['objectType'] in equipable_items:
-        item = Equipment(item_json['name'], item_json['description'], int(item_json['amount']), int(item_json['individualValue']), item_json['objectType'], item_json['statChangeList'])
+        item = Equipment(item_json['name'], item_json['description'], int(item_json['amount']), int(item_json['individualValue']), item_json['objectType'], item_json['objectSubType'], item_json['statChangeList'])
     elif item_json['objectType'] == 'Potion':
         item = Potion(item_json['name'], item_json['description'], int(item_json['amount']), int(item_json['individualValue']), item_json['objectType'], item_json['stat'], item_json['amountToChange'])
     elif item_json['objectType'] == 'Grimoire':
@@ -207,8 +210,9 @@ class Equipment(Item):
         This would increase hp by 3, atk by 2 and decrease speed by 2.
     '''
 
-    def __init__(self, name, description, amount, individual_value, objectType, statChangeList) -> None:
+    def __init__(self, name, description, amount, individual_value, objectType, objectSubType, statChangeList) -> None:
         super().__init__(name, description, amount, individual_value, objectType)
+        self.objectSubType = objectSubType
         self.statChangeList = statChangeList
 
     def show_info_trader(self):
@@ -234,7 +238,7 @@ class Equipment(Item):
         return statsString
 
     def create_item(self, amount):
-        return Equipment(self.name, self.description, amount, self.individualValue, self.objectType,
+        return Equipment(self.name, self.description, amount, self.individualValue, self.objectType, self.objectSubType,
                          self.statChangeList)
 
 

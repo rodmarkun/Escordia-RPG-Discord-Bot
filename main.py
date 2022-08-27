@@ -1,4 +1,5 @@
 # Imports
+import asyncio
 
 import discord
 import os
@@ -119,7 +120,7 @@ async def players(ctx):
         description=players_string,
         color=discord.Colour.red()
     )
-    embed.set_image(url=ctx.guild.icon_url)
+    embed.set_image(url=ctx.guild.icon.url)
     await ctx.send(embed=embed)
 
 @bot.command()
@@ -232,17 +233,32 @@ async def attack(ctx):
         await ctx.send(f'You are not currently in a fight, {ctx.author.mention}')
     else:
         in_fight.player = file_management.check_if_exists(ctx.author.name)
+        in_fight.player.addComboPoints(1)
         fight_text = in_fight.normal_attack()
         await ctx.send(fight_text)
 
         file_management.update_player(in_fight.player)
-
         file_management.delete_fight(ctx.author.name)
-        if not in_fight.enemy.alive:
-            await win_fight(ctx, in_fight)
+
+        if in_fight.player.alive:
+            if not in_fight.enemy.alive:
+                await win_fight(ctx, in_fight)
+            else:
+                file_management.write_fight(in_fight)
+                file_management.update_player(in_fight.player)
+                await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=in_fight.enemy, player_obj=in_fight.player))
         else:
-            file_management.write_fight(in_fight)
-            await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=in_fight.enemy, player_obj=in_fight.player))
+            embed = discord.Embed(
+                title=f'{in_fight.player.name} - Death {emojis_module.SKULL_EMOJI}',
+                description=f'You have died, {in_fight.player.name}. You have lost half your gold and retreated to safety.',
+                color=discord.Colour.red()
+            )
+            embed.set_image(url=ctx.author.avatar.url)
+            in_fight.player.alive = True
+            in_fight.player.comboPoints = 0
+            file_management.update_player(in_fight.player)
+            await ctx.send(embed=embed)
+    await asyncio.sleep(0.3)
 
 @bot.command()
 async def dungeon(ctx, arg=None):
@@ -292,26 +308,91 @@ async def spells(ctx, arg=0):
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
         if arg == 0:
-            spell_str = f"**{ctx.author.name}'s Spells:**\n"
-            i = 1
-            for spell in player_obj.spells:
-                spell_str += f"{i} - {spell['name']}\n"
-                i += 1
-            await ctx.send(spell_str)
+            embed = discord.Embed(
+                title=f'{player_obj.name}\'s spells',
+                description=player_obj.show_spells(),
+                color=discord.Colour.red()
+            )
+            await ctx.send(embed=embed)
         else:
             fight_obj = file_management.check_if_in_fight(ctx.author.name)
             if fight_obj is not None:
                 spell = skills_module.createSpell(fight_obj.player.spells[arg-1])
-                info_str = fight_obj.spell(spell)
+                info_str = fight_obj.skill(spell)
                 file_management.delete_fight(ctx.author.name)
                 await ctx.send(info_str)
-                if fight_obj.enemy.alive:
-                    file_management.write_fight(fight_obj)
-                    await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=fight_obj.enemy, player_obj=fight_obj.player))
+                if fight_obj.player.alive:
+                    if fight_obj.enemy.alive:
+                        file_management.write_fight(fight_obj)
+                        file_management.update_player(fight_obj.player)
+                        await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=fight_obj.enemy, player_obj=fight_obj.player))
+                    else:
+                        await win_fight(ctx, in_fight=fight_obj)
                 else:
-                    await win_fight(ctx, in_fight=fight_obj)
+                    embed = discord.Embed(
+                        title=f'{fight_obj.player.name} - Death {emojis_module.SKULL_EMOJI}',
+                        description=f'You have died, {fight_obj.player.name}. You have lost half your gold and retreated to safety.',
+                        color=discord.Colour.red()
+                    )
+                    embed.set_image(url=ctx.author.avatar.url)
+                    fight_obj.player.alive = True
+                    file_management.update_player(fight_obj.player)
+                    await ctx.send(embed=embed)
             else:
                 await ctx.send(f'You are not currently in a fight, {ctx.author.mention}')
+    else:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+
+@bot.command()
+async def combos(ctx, arg=0):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    if player_obj is not None:
+        if arg == 0:
+            embed = discord.Embed(
+                title=f'{player_obj.name}\'s combos',
+                description=player_obj.show_combos(),
+                color=discord.Colour.red()
+            )
+            await ctx.send(embed=embed)
+        else:
+            fight_obj = file_management.check_if_in_fight(ctx.author.name)
+            if fight_obj is not None:
+                combo = skills_module.createCombo(fight_obj.player.combos[arg-1])
+                info_str = fight_obj.skill(combo)
+                file_management.delete_fight(ctx.author.name)
+                await ctx.send(info_str)
+                if fight_obj.player.alive:
+                    if fight_obj.enemy.alive:
+                        file_management.write_fight(fight_obj)
+                        file_management.update_player(fight_obj.player)
+                        await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=fight_obj.enemy, player_obj=fight_obj.player))
+                    else:
+                        await win_fight(ctx, in_fight=fight_obj)
+                else:
+                    embed = discord.Embed(
+                        title=f'{fight_obj.player.name} - Death {emojis_module.SKULL_EMOJI}',
+                        description=f'You have died, {fight_obj.player.name}. You have lost half your gold and retreated to safety.',
+                        color=discord.Colour.red()
+                    )
+                    embed.set_image(url=ctx.author.avatar.url)
+                    fight_obj.player.alive = True
+                    file_management.update_player(fight_obj.player)
+                    await ctx.send(embed=embed)
+            else:
+                await ctx.send(f'You are not currently in a fight, {ctx.author.mention}')
+    else:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+
+@bot.command()
+async def masteries(ctx, arg=0):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    if player_obj is not None:
+        embed = discord.Embed(
+            title=f'{player_obj.name}\'s masteries',
+            description=player_obj.show_masteries(),
+            color=discord.Colour.red()
+        )
+        await ctx.send(embed=embed)
     else:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
 
@@ -384,7 +465,7 @@ async def shop(ctx, arg=0, quant=1):
                 purchasable_items = shop_obj.purchasable_items(player_obj)
                 if arg - 1 <= len(purchasable_items):
                     item_to_purchase = purchasable_items[arg-1]
-                    if player_obj.money > item_to_purchase.individualValue * quant:
+                    if player_obj.money >= item_to_purchase.individualValue * quant:
                         item_to_purchase.amount = quant
                         player_obj.inventory.add_item(item_to_purchase.create_item(quant))
                         player_obj.money -= item_to_purchase.individualValue * quant
@@ -469,7 +550,7 @@ def embed_fight_msg(ctx, enemy, player_obj):
     embed.set_thumbnail(url=enemy.imageUrl)
     embed.set_image(url=ctx.author.avatar.url)
     embed.set_footer(
-        text=f'{player_obj.name}\nHP: {player_obj.stats["hp"]}/{player_obj.stats["maxHp"]} | {player_hp_bar[0]}\nMP: {player_obj.stats["mp"]}/{player_obj.stats["maxMp"]} | {player_mp_bar[0]}')
+        text=f'{player_obj.name}\nHP: {player_obj.stats["hp"]}/{player_obj.stats["maxHp"]} | {player_hp_bar[0]}\nMP: {player_obj.stats["mp"]}/{player_obj.stats["maxMp"]} | {player_mp_bar[0]}\nCombo Points: {player_obj.comboPoints}')
     return embed
 
 async def dungeon_room(ctx, dungeon_obj, player_obj):
@@ -525,6 +606,7 @@ async def win_fight(ctx, in_fight):
         in_fight.player.inDungeon = False
         await ctx.send(f'Congratulations {ctx.author.mention}, you have completed this dungeon.')
 
+    in_fight.player.comboPoints = 0
     file_management.update_player(in_fight.player)
     if lvl_up:
         await ctx.send(f'{ctx.author.mention} - {lvl_up}')

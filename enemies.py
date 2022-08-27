@@ -31,10 +31,12 @@ class Enemy(combat.Battler):
         self.possibleLoot = possibleLoot
         self.lootChance = lootChance
         self.imageUrl = imageUrl
+        self.magicAttack = False
         self.isBoss = isBoss
 
 def createEnemy(enemy_json):
     enemy = Enemy(enemy_json['name'], enemy_json['stats'], enemy_json['xpReward'], enemy_json['goldReward'], enemy_json['possibleLoot'], enemy_json['lootChance'], enemy_json['imageUrl'], enemy_json['isBoss'])
+    enemy.magicAttack = enemy_json['magicAttack']
     return enemy
 
 # AREA 1:
@@ -120,6 +122,7 @@ class GiantDragonfly(Enemy):
                          imageUrl="https://i.postimg.cc/HskwXP9D/Insects-Dragonfly-B.png")
 
     # Area 1 Boss
+
 class Daidarabotchi(Enemy):
     def __init__(self):
         stats = {'maxHp': 102,
@@ -138,6 +141,7 @@ class Daidarabotchi(Enemy):
         self.isBoss = True
 
     # Dungeon 01 Area 1 Monsters
+
 class GoblinRaider(Enemy):
     def __init__(self):
         stats = {'maxHp': 35,
@@ -169,6 +173,24 @@ class GoblinArcher(Enemy):
                  }
         super().__init__('Goblin Archer', stats, xpReward=20, goldReward=randint(8, 16), possibleLoot=items.no_loot, lootChance=-1,
                          imageUrl="https://i.postimg.cc/tTXK2ngx/Goblin-Archer.png")
+
+class GoblinMage(Enemy):
+    def __init__(self):
+        stats = {'maxHp': 28,
+                 'hp': 28,
+                 'maxMp': 10,
+                 'mp': 10,
+                 'atk': 4,
+                 'def': 4,
+                 'matk': 7,
+                 'mdef': 8,
+                 'speed': 10,
+                 'critCh': 10
+                 }
+        super().__init__('Goblin Mage', stats, xpReward=20, goldReward=randint(8, 16), possibleLoot=items.no_loot,
+                         lootChance=-1,
+                         imageUrl="https://i.postimg.cc/fL7m1s6v/Goblin-Mage.png")
+        self.magicAttack = True
 
 class GoblinElite(Enemy):
     def __init__(self):
@@ -271,6 +293,7 @@ class MountainHarpy(Enemy):
                          imageUrl="https://i.postimg.cc/jdPjyPK1/Wind-Harpy.png")
 
     # Area 2 Boss:
+
 class RogueMasterGarland(Enemy):
     def __init__(self):
         stats = {'maxHp': 235,
@@ -289,6 +312,7 @@ class RogueMasterGarland(Enemy):
         self.isBoss = True
 
     # Dungeon 02 Area 2 Monsters
+
 class SkeletonGuard(Enemy):
     def __init__(self):
         stats = {'maxHp': 60,
@@ -336,6 +360,23 @@ class SkeletonKnight(Enemy):
                  }
         super().__init__('Skeleton Knight', stats, xpReward=100, goldReward=randint(15, 55), possibleLoot=items.no_loot, lootChance=-1,
                          imageUrl="https://i.postimg.cc/qB6ygw9S/Skeleton-Knight-Baron.png")
+
+class SkeletonMage(Enemy):
+    def __init__(self):
+        stats = {'maxHp': 50,
+                 'hp': 50,
+                 'maxMp': 10,
+                 'mp': 10,
+                 'atk': 5,
+                 'def': 6,
+                 'matk': 12,
+                 'mdef': 10,
+                 'speed': 15,
+                 'critCh': 10
+                 }
+        super().__init__('Skeleton Mage', stats, xpReward=90, goldReward=randint(20, 50), possibleLoot=items.no_loot, lootChance=-1,
+                         imageUrl="https://i.postimg.cc/1zBydYvq/Skeleton-Mage.png")
+        self.magicAttack = True
 
 class SkeletonDragon(Enemy):
     def __init__(self):
@@ -442,6 +483,6 @@ area_1_boss = Daidarabotchi
 area_2_enemies = [RogueSwordsman, RogueMonk, RogueAssasin, EarthWorm, MountainHarpy]
 area_2_boss = RogueMasterGarland
 
-dungeon_1_enemies = [GoblinRaider, GoblinArcher]
-dungeon_2_enemies = [SkeletonHero, SkeletonGuard, SkeletonKnight]
+dungeon_1_enemies = [GoblinRaider, GoblinArcher, GoblinMage]
+dungeon_2_enemies = [SkeletonHero, SkeletonGuard, SkeletonKnight, SkeletonMage]
 dungeon_3_enemies = [BlackAntKnight, BlackAntBerserker, BlackAntArcher, BlackAntProtector]

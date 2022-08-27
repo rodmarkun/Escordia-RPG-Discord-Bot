@@ -10,10 +10,9 @@ help_text = f'{emojis.STAR_EMOJI} **General** {emojis.STAR_EMOJI}\n' \
                      '`!rest` - Fully recover your HP and MP. Has a 30min cooldown.\n' \
                      '`!inn` - Fully recover your HP and MP, for a reasonable price.\n' \
                      '`!inventory` - Show all items from your inventory\n' \
-                     '`!equip [item_index]` - Equip an item from your inventory\n' \
                      '`!spells` - See a list with all of your spells\n' \
                      '`!aptitudes` - Show your current aptitudes\n' \
-                     '`!aptitudes [aptitude] [points]` - Spend points on upgrading aptitudes\n' \
+                     '`!masteries` - Show your current mastery with each type of weapon\n' \
                      f'{emojis.COIN_EMOJI} **Economy** {emojis.COIN_EMOJI}\n' \
                      '`!shop` - Buy items from the store\n' \
                      '`!sell [item_index] [quantity]` - Sell items from your inventory at 50% its price value\n' \

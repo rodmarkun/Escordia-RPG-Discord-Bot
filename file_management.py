@@ -4,6 +4,8 @@ import inventory
 import player
 import time
 import fight as fight_module
+import skills
+
 
 def check_if_exists(player_name):
     '''
@@ -108,6 +110,7 @@ def write_player(player_obj):
     with open("players.txt", "a") as file:
         file.write(player_obj.toJSON() + '\n')
     write_inventory(player_obj)
+    create_masteries(player_obj)
 
 def delete_player(player_name):
     '''
@@ -130,6 +133,8 @@ def write_inventory(player_obj):
 
     :param player_obj: Player object which contains the Inventory object
     '''
+    print(player_obj.inventory)
+    print(player_obj.inventory.toJSON())
     with open("inventory.txt", "a") as file:
         file.write(player_obj.inventory.toJSON() + '\n')
 
@@ -146,6 +151,14 @@ def delete_inventory(player_name):
             res = json.loads(line)
             if res['player_name'] != player_name:
                 file.write(line)
+
+def get_inventory(player_name):
+    with open("inventory.txt", "r") as file:
+        lines = file.readlines()
+        for line in lines:
+            res = json.loads(line)
+            if res['player_name'] == player_name:
+                return inventory.createInventory(res)
 
 def update_player(player_obj):
     '''
@@ -164,3 +177,46 @@ def update_player(player_obj):
                 file.write(player_obj.toJSON() + '\n')
     delete_inventory(player_obj.name)
     write_inventory(player_obj)
+
+def create_masteries(player_obj):
+    '''
+    Creates an entry for a player's masteries
+
+    :param player_obj:
+    '''
+    with open("masteries.txt", "a") as file:
+        masteries_dict = {"name" : player_obj.name, "masteries" : player.masteries}
+        file.write(json.dumps(masteries_dict) + '\n')
+
+def update_masteries(player_obj, weapon, exp):
+    with open("masteries.txt", "r") as file:
+        lines = file.readlines()
+    with open("masteries.txt", "w") as file:
+        for line in lines:
+            print(line)
+            res = json.loads(line)
+            if res['name'] != player_obj.name:
+                file.write(line)
+            else:
+                info_txt = ""
+                masteries_dict = res["masteries"]
+                masteries_dict[weapon]["xp"] += exp
+                while masteries_dict[weapon]["xp"] > masteries_dict[weapon]["xpToNextLvl"]:
+                    masteries_dict[weapon]["lvl"] += 1
+                    masteries_dict[weapon]["xp"] -= masteries_dict[weapon]["xpToNextLvl"]
+                    masteries_dict[weapon]["xpToNextLvl"] = round(masteries_dict[weapon]["xpToNextLvl"] * 1.5 + 100 * masteries_dict[weapon]["lvl"] * masteries_dict[weapon]["lvl"] / 2)
+                    try:
+                        player_obj.combos.append(skills.combo_learn[weapon][masteries_dict[weapon]["lvl"]])
+                    except:
+                        print("Something went wrong when learning a new combo")
+                    info_txt += f"Your mastery with {weapon} has leveled up! You have acquired a new combo!\n"
+                res["masteries"] = masteries_dict
+                file.write(json.dumps(res) + '\n')
+                return info_txt
+
+def get_masteries(player_obj):
+    with open("masteries.txt", "r") as file:
+        for line in file:
+            res = json.loads(line)
+            if res['name'] == player_obj.name:
+                return res

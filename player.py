@@ -1,10 +1,15 @@
 import json
 
+import file_management
 import inventory
-#import text
 import combat
 import skills
+import emojis
+from StringProgressBar import progressBar
 
+
+masteries_leveling = {"lvl" : 1, "xp" : 0, "xpToNextLvl" : 150}
+masteries = {"Swords" : masteries_leveling, "Axes & Hammers" : masteries_leveling, "Daggers" : masteries_leveling, "Bows" : masteries_leveling, "Staffs & Scythes" : masteries_leveling}
 
 class Player(combat.Battler):
     '''
@@ -112,13 +117,37 @@ class Player(combat.Battler):
                f'Example: `!aptitudes dex 1`\n' \
                f'You currently have {self.aptitudePoints} aptitude points.'
 
+    def show_spells(self):
+        spell_str = ""
+        i = 1
+        for spell in self.spells:
+            spell_str += f"{i} - **{spell['name']}** [Power: {spell['power']}, MP Cost: {spell['cost']}], \"{spell['description']}\"\n"
+            i += 1
+        return spell_str
+
+    def show_combos(self):
+        combo_str = ""
+        i = 1
+        for combo in self.combos:
+            combo_str += f"{i} - **{combo['name']}** [Combo Points: {combo['cost']}], \"{combo['description']}\"\n"
+            i += 1
+        return combo_str
+
+    def show_masteries(self):
+        masteries_dict = file_management.get_masteries(self)
+        info_txt = ""
+        for mastery in masteries_dict["masteries"]:
+            mastery_bar = progressBar.filledBar(masteries_dict["masteries"][mastery]["xpToNextLvl"], masteries_dict["masteries"][mastery]["xp"], size=10)
+            info_txt += f'{emojis.weapon_to_emoji[mastery]} **{mastery}** - LVL: {masteries_dict["masteries"][mastery]["lvl"]} - {mastery_bar[0]} \n'
+        return info_txt
+
     def normal_attack(self, defender):
         '''
         Performs a normal attack, same as Battler's but adding a Combo Point.
         :param defender:
         :return:
         '''
-        self.addComboPoints(1)
+        #self.addComboPoints(1)
         return super().normal_attack(defender)
 
 
@@ -179,6 +208,8 @@ class Player(combat.Battler):
         '''
         lvl_up_str = ""
         self.xp += exp
+        if self.equipment["Weapon"] is not None:
+            lvl_up_str += file_management.update_masteries(self, self.equipment["Weapon"]["objectSubType"], exp)
         #print(f"You earn {exp}xp")
         # Level up:
         while self.xp >= self.xpToNextLvl:
@@ -191,7 +222,7 @@ class Player(combat.Battler):
             self.aptitudePoints += 1
             combat.fully_heal(self)
             combat.fully_recover_mp(self)
-            lvl_up_str = f"Level up! You are now level {self.lvl}. Your HP and MP have been restored. You now have {self.aptitudePoints} aptitude points"
+            lvl_up_str += f"Level up! You are now level {self.lvl}. Your HP and MP have been restored. You now have {self.aptitudePoints} aptitude points"
         return lvl_up_str
 
     def add_money(self, money):
@@ -277,6 +308,7 @@ def createPlayer(player_json):
     player.inDungeon = player_json['inDungeon']
     player.spells = player_json['spells']
     player.combos = player_json['combos']
+    player.inventory = file_management.get_inventory(player.name)
     return player
 
 class PlayerEncoder(json.JSONEncoder):
