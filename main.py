@@ -1,26 +1,20 @@
+'''
+ /////////////////////////////// ESCORDIA RPG ///////////////////////////////
+                Made by @RodmarKun, Pablo Rodríguez Martín
+                        https://github.com/rodmarkun
+'''
+
 # Imports
 import asyncio
-
-import discord
 import os
 import json
 
-import emojis
-import file_management
-import random
-import combat as combat_module
-import player as player_module
-import dungeons as dungeons_module
-import fight as fight_module
-import emojis as emojis_module
 import shop as shop_module
 import skills as skills_module
-import text
 import text as text_module
-import area as area_module
 
+from logic import *
 from discord.ext import commands
-from StringProgressBar import progressBar
 
 # Discord token from VENV
 DISCORD_TOKEN = os.environ.get('DISCORD_TOKEN')
@@ -32,9 +26,13 @@ bot = commands.Bot(command_prefix='!', intents=intents, activity=activity)
 bot.remove_command('help')
 shop_obj = shop_module.Shop()
 
-# !help command
+
 @bot.command()
 async def help(ctx):
+    '''
+    !help command
+    Shows info of all commands
+    '''
     command_string = text_module.help_text
     embed = discord.Embed(
         title='Bot Commands',
@@ -45,6 +43,10 @@ async def help(ctx):
 
 @bot.command()
 async def start(ctx):
+    '''
+    !start command
+    Creates a new character
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
         await ctx.send(f'You already have a character in the world of Escordia, {ctx.author.mention}.')
@@ -55,49 +57,42 @@ async def start(ctx):
 
 @bot.command()
 async def tutorial(ctx):
+    '''
+    !tutorial command
+    Shows a small intro/tutorial
+    '''
     embed = discord.Embed(
         title=f'Tutorial',
-        description=text.tutorial_1,
+        description=text_module.tutorial_1,
         color=discord.Colour.red()
     )
     await ctx.send(embed=embed)
 
 @bot.command()
 async def area(ctx, arg=0):
+    '''
+    !area command
+    Shows all areas or travels to a certain area
+    :param arg: Area to travel to. If 0, just shows all areas
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is None:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
     else:
         try:
             if arg == 0:
-                current_area = area_module.areas[player_obj.currentArea - 1]
-                areas_txt = area_module.show_areas()
-                areas_txt += f'\nYou are currently in **{current_area.name}** (area {current_area.number})\n'
-                embed = discord.Embed(
-                    title=f'Areas',
-                    description=areas_txt,
-                    color=discord.Colour.red()
-                )
-                await ctx.send(embed=embed)
+                await send_area_embed(player_obj, ctx)
             else:
-                if not player_obj.inDungeon:
-                    if player_obj.defeatedBosses + 1 >= arg:
-                        if player_obj.currentArea != arg:
-                            player_obj.currentArea = arg
-                            file_management.delete_player(player_obj.name)
-                            file_management.write_player(player_obj)
-                            await ctx.send(f'{ctx.author.mention} you are now in area {arg}')
-                        else:
-                            await ctx.send(f'{ctx.author.mention} you are already in area {arg}')
-                    else:
-                        await ctx.send(f'{ctx.author.mention} you first need to defeat the `!boss` of al previous areas.')
-                else:
-                    await ctx.send(f'{ctx.author.mention} you cannot travel while you are in a dungeon.')
+               await travel_area(player_obj, ctx, arg)
         except:
             await ctx.send(f'Something went wrong. Did you type the command correctly?')
 
 @bot.command()
 async def boss(ctx):
+    '''
+    !boss command
+    Fight against the boss of current area
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is None:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
@@ -110,14 +105,13 @@ async def boss(ctx):
 
 @bot.command()
 async def players(ctx):
-    players_string = ''
-    with open("players.txt", "r") as file:
-        for line in file:
-            res = json.loads(line)
-            players_string += res['name'] + '\n'
+    '''
+    !players command
+    Shows all players in Escordia RPG
+    '''
     embed = discord.Embed(
         title=f'Players - {ctx.guild.name}',
-        description=players_string,
+        description=file_management.get_all_players(),
         color=discord.Colour.red()
     )
     embed.set_image(url=ctx.guild.icon.url)
@@ -125,6 +119,11 @@ async def players(ctx):
 
 @bot.command()
 async def profile(ctx, arg=None):
+    '''
+    !profile command
+    Shows profile of specified player
+    :param arg: Player whose profile will be shown. If None, shows self profile
+    '''
     with open("players.txt", "r") as file:
         for line in file:
             res = json.loads(line)
@@ -132,15 +131,7 @@ async def profile(ctx, arg=None):
             if arg is not None:
                 search = arg
             if res['name'] == search:
-                player_obj = player_module.createPlayer(res)
-                embed = discord.Embed(
-                    title=f'Profile - {player_obj.name}',
-                    description=player_obj.show_info(),
-                    color = discord.Colour.red()
-                )
-                fetched_user = discord.utils.get(ctx.guild.members, name=search)
-                embed.set_image(url=fetched_user.avatar.url)
-                await ctx.send(embed=embed)
+                await send_player_profile(res, ctx, search)
                 return
     if arg is None:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
@@ -149,6 +140,11 @@ async def profile(ctx, arg=None):
 
 @bot.command()
 async def equip(ctx, arg=None):
+    '''
+    !equip command
+    Equips a certain item
+    :param arg: Index of item to equip
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is None:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
@@ -168,6 +164,11 @@ async def equip(ctx, arg=None):
 
 @bot.command()
 async def use(ctx, arg=None):
+    '''
+    !use command
+    Uses a certain item
+    :param arg: Index of item to use
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is None:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
@@ -184,30 +185,22 @@ async def use(ctx, arg=None):
 
 @bot.command()
 async def aptitudes(ctx, apt=None, apt_points=None):
+    '''
+    !aptitudes command
+    Shows current aptitudes or upgrades an aptitude by x points
+    :param apt: Aptitude to level up. If none, just shows up all aptitudes
+    :param apt_points: Number of aptitude points to spend
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is None:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
     else:
         if apt is None:
-            embed = discord.Embed(
-                title=f'{player_obj.name}\'s Aptitudes',
-                description=player_obj.show_aptitudes(),
-                color=discord.Colour.red()
-            )
-            embed.set_image(url=ctx.author.avatar.url)
-            await ctx.send(embed=embed)
+            await send_aptitudes_embed(player_obj, ctx)
         elif apt is not None and apt_points is not None:
             if file_management.check_if_in_fight(ctx.author.name) is None:
                 try:
-                    if player_obj.aptitudePoints < int(apt_points):
-                        await ctx.send(f'{ctx.author.mention}, you do not have that many aptitude points.')
-                        return
-                    else:
-                        player_obj.aptitudes[apt.lower()] += int(apt_points)
-                        player_obj.update_stats_to_aptitudes(apt.lower(), int(apt_points))
-                        player_obj.aptitudePoints -= int(apt_points)
-                        file_management.update_player(player_obj)
-                        await ctx.send(f'{ctx.author.mention} you have succesfully upgraded your {apt.lower()} to {player_obj.aptitudes[apt.lower()]}')
+                    await level_up_aptitudes(player_obj, ctx, apt, apt_points)
                 except:
                     await ctx.send(f'Something went wrong. Are you sure you typed the aptitude correctly, {ctx.author.mention}?')
             else:
@@ -215,6 +208,10 @@ async def aptitudes(ctx, apt=None, apt_points=None):
 
 @bot.command()
 async def fight(ctx):
+    '''
+    !fight command
+    Makes the player fight a random enemy from current area
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
         if file_management.check_if_in_fight(ctx.author.name) is None and not player_obj.inDungeon:
@@ -228,75 +225,38 @@ async def fight(ctx):
 
 @bot.command()
 async def attack(ctx):
+    '''
+    !attack command
+    Attack enemy fighting the player
+    '''
     in_fight = file_management.check_if_in_fight(ctx.author.name)
     if in_fight is None:
         await ctx.send(f'You are not currently in a fight, {ctx.author.mention}')
     else:
-        in_fight.player = file_management.check_if_exists(ctx.author.name)
-        in_fight.player.addComboPoints(1)
-        fight_text = in_fight.normal_attack()
-        await ctx.send(fight_text)
+        await player_normal_attack(in_fight, ctx)
 
         file_management.update_player(in_fight.player)
         file_management.delete_fight(ctx.author.name)
 
-        if in_fight.player.alive:
-            if not in_fight.enemy.alive:
-                await win_fight(ctx, in_fight)
-            else:
-                file_management.write_fight(in_fight)
-                file_management.update_player(in_fight.player)
-                await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=in_fight.enemy, player_obj=in_fight.player))
-        else:
-            embed = discord.Embed(
-                title=f'{in_fight.player.name} - Death {emojis_module.SKULL_EMOJI}',
-                description=f'You have died, {in_fight.player.name}. You have lost half your gold and retreated to safety.',
-                color=discord.Colour.red()
-            )
-            embed.set_image(url=ctx.author.avatar.url)
-            in_fight.player.alive = True
-            in_fight.player.comboPoints = 0
-            file_management.update_player(in_fight.player)
-            await ctx.send(embed=embed)
+        await finish_turn(in_fight, ctx)
     await asyncio.sleep(0.3)
 
 @bot.command()
 async def dungeon(ctx, arg=None):
+    '''
+    !dungeon command
+    Shows all dungeons or enter a specific dungeon
+    :param arg: Specifies index of dungeon to enter. If none, shows all dungeons in current area.
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
         curr_area = area_module.areas[player_obj.currentArea - 1]
         if arg is None:
-            dungeons_txt = ''
-            i = 1
-            for dungeon_in_area in curr_area.dungeons:
-                dungeons_txt += f'{i} - **{dungeon_in_area.name}** - Recommended lvl: {dungeon_in_area.recommended_lvl}\n'
-                i += 1
-            dungeons_txt += f'\nUse `!dungeon [dungeon_number]` to enter a certain dungeon.\nUse `!dungeon next` inside the dungeon to progress.'
-            embed = discord.Embed(
-                title=f'Area {player_obj.currentArea} - Dungeons',
-                description=dungeons_txt,
-                color=discord.Colour.red()
-            )
-            await ctx.send(embed=embed)
+            await show_current_dungeons(curr_area, player_obj, ctx)
         else:
             in_fight = file_management.check_if_in_fight(ctx.author.name) 
             if in_fight is None:
-                if not player_obj.inDungeon:
-                    try:
-                        area_dungeon = curr_area.dungeons[int(arg)-1]
-                        dungeon_obj = dungeons_module.Dungeon(area_dungeon.name, area_dungeon.enemies, area_dungeon.loot_pool, area_dungeon.boss, area_dungeon.min_enemy_rooms, area_dungeon.min_loot_rooms, area_dungeon.max_enemy_rooms, area_dungeon.max_loot_rooms, player_obj.name, area_dungeon.dungeon_number, area_dungeon.recommended_lvl)
-                    
-                        player_obj.inDungeon = True
-                        file_management.update_player(player_obj)
-                        await dungeon_room(ctx, dungeon_obj, player_obj)
-                    except:
-                        await ctx.send(f'Wrong command, {ctx.author.name}. You first need to choose a dungeon, example: `!dungeon 1`.')
-                else:
-                    if arg != "next":
-                        await ctx.send(f'You are already in a dungeon! Use `!dungeon next`')
-                    else:
-                        dungeon_obj = file_management.check_if_in_dungeon(ctx.author.name)
-                        await dungeon_room(ctx, dungeon_obj, player_obj)
+                await dungeon_logic(player_obj, curr_area, arg, ctx)
             elif player_obj.inDungeon:
                 await ctx.send(f'You cannot traverse further into the dungeon while you are in combat, {ctx.author.name}')
             else:
@@ -305,15 +265,15 @@ async def dungeon(ctx, arg=None):
 
 @bot.command()
 async def spells(ctx, arg=0):
+    '''
+    !spells command
+    Shows all spells or casts a certain spell
+    :param arg: Index of spell to cast. If 0, shows all spells.
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
         if arg == 0:
-            embed = discord.Embed(
-                title=f'{player_obj.name}\'s spells',
-                description=player_obj.show_spells(),
-                color=discord.Colour.red()
-            )
-            await ctx.send(embed=embed)
+            await show_player_spells(player_obj, ctx)
         else:
             fight_obj = file_management.check_if_in_fight(ctx.author.name)
             if fight_obj is not None:
@@ -321,23 +281,8 @@ async def spells(ctx, arg=0):
                 info_str = fight_obj.skill(spell)
                 file_management.delete_fight(ctx.author.name)
                 await ctx.send(info_str)
-                if fight_obj.player.alive:
-                    if fight_obj.enemy.alive:
-                        file_management.write_fight(fight_obj)
-                        file_management.update_player(fight_obj.player)
-                        await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=fight_obj.enemy, player_obj=fight_obj.player))
-                    else:
-                        await win_fight(ctx, in_fight=fight_obj)
-                else:
-                    embed = discord.Embed(
-                        title=f'{fight_obj.player.name} - Death {emojis_module.SKULL_EMOJI}',
-                        description=f'You have died, {fight_obj.player.name}. You have lost half your gold and retreated to safety.',
-                        color=discord.Colour.red()
-                    )
-                    embed.set_image(url=ctx.author.avatar.url)
-                    fight_obj.player.alive = True
-                    file_management.update_player(fight_obj.player)
-                    await ctx.send(embed=embed)
+
+                await finish_turn(fight_obj, ctx)
             else:
                 await ctx.send(f'You are not currently in a fight, {ctx.author.mention}')
     else:
@@ -345,15 +290,15 @@ async def spells(ctx, arg=0):
 
 @bot.command()
 async def combos(ctx, arg=0):
+    '''
+    !combos command
+    Shows all combos or performs a certain combo
+    :param arg: Index of combo to perform. If 0, shows all combo.
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
         if arg == 0:
-            embed = discord.Embed(
-                title=f'{player_obj.name}\'s combos',
-                description=player_obj.show_combos(),
-                color=discord.Colour.red()
-            )
-            await ctx.send(embed=embed)
+            await show_player_combos(player_obj, ctx)
         else:
             fight_obj = file_management.check_if_in_fight(ctx.author.name)
             if fight_obj is not None:
@@ -361,44 +306,32 @@ async def combos(ctx, arg=0):
                 info_str = fight_obj.skill(combo)
                 file_management.delete_fight(ctx.author.name)
                 await ctx.send(info_str)
-                if fight_obj.player.alive:
-                    if fight_obj.enemy.alive:
-                        file_management.write_fight(fight_obj)
-                        file_management.update_player(fight_obj.player)
-                        await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=fight_obj.enemy, player_obj=fight_obj.player))
-                    else:
-                        await win_fight(ctx, in_fight=fight_obj)
-                else:
-                    embed = discord.Embed(
-                        title=f'{fight_obj.player.name} - Death {emojis_module.SKULL_EMOJI}',
-                        description=f'You have died, {fight_obj.player.name}. You have lost half your gold and retreated to safety.',
-                        color=discord.Colour.red()
-                    )
-                    embed.set_image(url=ctx.author.avatar.url)
-                    fight_obj.player.alive = True
-                    file_management.update_player(fight_obj.player)
-                    await ctx.send(embed=embed)
+
+                await finish_turn(fight_obj, ctx)
             else:
                 await ctx.send(f'You are not currently in a fight, {ctx.author.mention}')
     else:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
 
 @bot.command()
-async def masteries(ctx, arg=0):
+async def masteries(ctx):
+    '''
+    !masteries command
+    Shows current mastery levels
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
-        embed = discord.Embed(
-            title=f'{player_obj.name}\'s masteries',
-            description=player_obj.show_masteries(),
-            color=discord.Colour.red()
-        )
-        await ctx.send(embed=embed)
+        show_player_masteries(player_obj, ctx)
     else:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
 
 @commands.cooldown(1, 1800, commands.BucketType.user)
 @bot.command()
 async def rest(ctx):
+    '''
+    !rest command
+    Fully heal player's character. Cooldown of 30min
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     in_fight = file_management.check_if_in_fight(ctx.author.name)
 
@@ -414,6 +347,10 @@ async def rest(ctx):
 
 @bot.command()
 async def inn(ctx):
+    '''
+    !inn command
+    Fully heal player's character. It costs 10 * Player's Lvl
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     in_fight = file_management.check_if_in_fight(ctx.author.name)
 
@@ -434,6 +371,10 @@ async def inn(ctx):
 
 @bot.command()
 async def inventory(ctx):
+    '''
+    !inventory command
+    Shows player's inventory
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
         inv_contents = player_obj.inventory.show_inventory()
@@ -451,6 +392,12 @@ async def inventory(ctx):
 
 @bot.command()
 async def shop(ctx, arg=0, quant=1):
+    '''
+    !shop command
+    Shows shop's items or buys a certain quantity of an item
+    :param arg: Index of item to buy. If 0, shows all shop's items
+    :param quant: Quantity to buy of specified item
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
         if file_management.check_if_in_fight(player_obj.name) is None and not player_obj.inDungeon:
@@ -483,6 +430,12 @@ async def shop(ctx, arg=0, quant=1):
 
 @bot.command()
 async def sell(ctx, arg=0, amount=1):
+    '''
+    !sell command
+    Sell a certain item from your inventory
+    :param arg: Index of item to sell.
+    :param quant: Quantity to sell of specified item
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
         if file_management.check_if_in_fight(player_obj.name) is None and not player_obj.inDungeon:
@@ -518,110 +471,5 @@ async def command_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         em = discord.Embed(title=f"Slow down!",description=f"Try again in {error.retry_after:.2f}s.")
         await ctx.send(embed=em)
-
-async def begin_fight(ctx, player, enemy):
-    in_fight = file_management.check_if_in_fight(ctx.author.name)
-    if in_fight is not None:
-        await ctx.send(f'You are already in a fight against **{in_fight.enemy.name}**, {ctx.author.mention}')
-        return
-
-    if player is not None:
-        fight_msg = await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=enemy, player_obj=player))
-
-        fight_obj = fight_module.Fight(player=player, enemy=enemy, fight_msg=fight_msg.id)
-        file_management.write_fight(fight_obj)
-    else:
-        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
-
-def embed_fight_msg(ctx, enemy, player_obj):
-    hp_bar = progressBar.filledBar(enemy.stats['maxHp'], enemy.stats['hp'], size=10)
-    player_hp_bar = progressBar.filledBar(player_obj.stats['maxHp'], player_obj.stats['hp'], size=10)
-    player_mp_bar = progressBar.filledBar(player_obj.stats['maxMp'], player_obj.stats['mp'], size=10)
-    embed = discord.Embed(
-        title=f'Fight - {ctx.author}',
-        description=f'You are fighting a **{enemy.name}**.\n'
-                    f'HP: {hp_bar[0]} - {enemy.stats["hp"]}/{enemy.stats["maxHp"]}\n'
-                    f'What will you do?\n\n'
-                    f'{emojis_module.RED_CIRCLE_EMOJI} Attack - !attack\n'
-                    f'{emojis_module.RED_CIRCLE_EMOJI} Spells - !spells\n'
-                    f'{emojis_module.RED_CIRCLE_EMOJI} Combos - !combos',
-        color=discord.Colour.red()
-    )
-    embed.set_thumbnail(url=enemy.imageUrl)
-    embed.set_image(url=ctx.author.avatar.url)
-    embed.set_footer(
-        text=f'{player_obj.name}\nHP: {player_obj.stats["hp"]}/{player_obj.stats["maxHp"]} | {player_hp_bar[0]}\nMP: {player_obj.stats["mp"]}/{player_obj.stats["maxMp"]} | {player_mp_bar[0]}\nCombo Points: {player_obj.comboPoints}')
-    return embed
-
-async def dungeon_room(ctx, dungeon_obj, player_obj):
-    room_choice = ["Loot", "Enemy"]
-    curr_room = random.choice(room_choice)
-
-    if (curr_room == "Loot" or curr_room == "Enemy" and dungeon_obj.enemy_rooms == 0) and dungeon_obj.loot_rooms > 0:
-        dungeon_obj.loot_rooms -= 1
-        item = (random.choice(dungeon_obj.loot_pool).create_item(1))
-        player_obj.inventory.add_item(item)
-
-        desc = f'{ctx.author.mention}While traversing the dungeon, you find a {emojis.obj_to_emoji[item.objectType]} {item.name}!'
-        embed = discord.Embed(
-            title=f'{emojis.ESC_CHEST_ICON} Treasure!',
-            description=desc,
-            color=discord.Colour.red()
-        )
-        await ctx.send(embed=embed)
-        file_management.update_player(player_obj)
-        file_management.delete_dungeon(ctx.author.name)
-        file_management.write_dungeon(dungeon_obj)
-    elif (curr_room == "Enemy" or curr_room == "Loot" and dungeon_obj.loot_rooms == 0) and dungeon_obj.enemy_rooms > 0:
-        dungeon_obj.enemy_rooms -= 1
-        enemy = random.choice(dungeon_obj.enemies)()
-        await begin_fight(ctx, player_obj, enemy)
-        file_management.update_player(player_obj)
-        file_management.delete_dungeon(ctx.author.name)
-        file_management.write_dungeon(dungeon_obj)
-    elif dungeon_obj.loot_rooms == 0 and dungeon_obj.enemy_rooms == 0:
-        await begin_fight(ctx, player_obj, dungeon_obj.boss())
-        file_management.delete_dungeon(ctx.author.name)
-        file_management.update_player(player_obj)
-        print(f'END: {player_obj.inDungeon}')
-
-async def win_fight(ctx, in_fight):
-    lvl_up = in_fight.player.add_exp(in_fight.enemy.xpReward)
-    in_fight.player.add_money(in_fight.enemy.goldReward)
-    
-    enemy_looted = False
-    if combat_module.check_if_loot(in_fight.player, in_fight.enemy):
-        enemy_looted = True
-
-    await ctx.send(
-        embed=embed_victory_msg(ctx=ctx, enemy=in_fight.enemy, player_obj=in_fight.player, xp=in_fight.enemy.xpReward,
-                                gold=in_fight.enemy.goldReward, looted=enemy_looted))
-
-    if in_fight.enemy.isBoss and not in_fight.player.inDungeon:
-        if in_fight.player.currentArea > in_fight.player.defeatedBosses:
-            in_fight.player.defeatedBosses = in_fight.player.currentArea
-            await ctx.send(f'Congratulations {ctx.author.mention}, you can now access the next area.')
-
-    if in_fight.enemy.isBoss and in_fight.player.inDungeon:
-        in_fight.player.inDungeon = False
-        await ctx.send(f'Congratulations {ctx.author.mention}, you have completed this dungeon.')
-
-    in_fight.player.comboPoints = 0
-    file_management.update_player(in_fight.player)
-    if lvl_up:
-        await ctx.send(f'{ctx.author.mention} - {lvl_up}')
-
-def embed_victory_msg(ctx, enemy, player_obj, xp, gold, looted):
-    looted_str = ''
-    if looted:
-        looted_str = f'\nYou loot **{enemy.possibleLoot["name"]}**.'
-    embed = discord.Embed(
-        title=f'Victory!',
-        description=f'{emojis_module.SPARKLER_EMOJI} **{ctx.author.name}** has slain a **{enemy.name}** {emojis_module.SPARKLER_EMOJI}\nYou earn {xp}xp and {gold} gold.\n' + looted_str,
-        color=discord.Colour.red()
-    )
-    embed.set_thumbnail(url=enemy.imageUrl)
-    embed.set_image(url=ctx.author.avatar.url)
-    return embed
 
 bot.run(DISCORD_TOKEN)

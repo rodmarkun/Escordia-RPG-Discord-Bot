@@ -220,3 +220,12 @@ def get_masteries(player_obj):
             res = json.loads(line)
             if res['name'] == player_obj.name:
                 return res
+
+def get_all_players():
+    players_string = ''
+    with open("players.txt", "r") as file:
+        for line in file:
+            res = json.loads(line)
+            players_string += res['name'] + '\n'
+    return players_string
+
