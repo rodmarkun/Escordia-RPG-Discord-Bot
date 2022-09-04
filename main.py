@@ -321,7 +321,7 @@ async def masteries(ctx):
     '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
-        show_player_masteries(player_obj, ctx)
+        await show_player_masteries(player_obj, ctx)
     else:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
 

@@ -258,7 +258,7 @@ async def show_player_combos(player_obj, ctx):
     )
     await ctx.send(embed=embed)
 
-def show_player_masteries(player_obj, ctx):
+async def show_player_masteries(player_obj, ctx):
     embed = discord.Embed(
         title=f'{player_obj.name}\'s masteries',
         description=player_obj.show_masteries(),
