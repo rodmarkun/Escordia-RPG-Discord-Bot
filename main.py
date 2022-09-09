@@ -9,6 +9,7 @@ import asyncio
 import os
 import json
 
+import file_management
 import shop as shop_module
 import skills as skills_module
 import text as text_module
@@ -152,15 +153,16 @@ async def equip(ctx, arg=None):
         if arg is None:
             await ctx.send(f'You need to provide the item index from your inventory to be able to equip it.')
         else:
-             try:
+             #try:
                 if len(player_obj.inventory.items) >= int(arg):
                     info = player_obj.equip_item(player_obj.inventory.items[int(arg)-1])
                     await ctx.send(info)
                     file_management.update_player(player_obj)
+                    await inventory(ctx)
                 else:
                     await ctx.send(f'There is no item with that index in your inventory.')
-             except:
-                 await ctx.send(f'You need to provide a valid item index')
+             #except:
+             #    await ctx.send(f'You need to provide a valid item index')
 
 @bot.command()
 async def use(ctx, arg=None):
@@ -182,6 +184,59 @@ async def use(ctx, arg=None):
                     file_management.update_player(player_obj)
                 else:
                     await ctx.send(f'There is no item with that index in your inventory.')
+
+@bot.command()
+async def craft(ctx, arg=None):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    if player_obj is None:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+    else:
+        if file_management.check_if_in_fight(player_obj.name) is None:
+            if arg is None:
+                await show_player_crafting_tiers(player_obj, ctx)
+            elif arg[0:4] == "tier":
+                if player_obj.defeatedBosses + 1 >= int(arg[4]):
+                    await show_player_crafts(player_obj, int(arg[4]), ctx)
+                    await inventory(ctx)
+                else:
+                    await ctx.send(f'You have not unlocked that tier of crafting yet, {ctx.author.mention}')
+            else:
+                await craft_item(ctx, arg, player_obj)
+                await inventory(ctx)
+        else:
+            await ctx.send(f'You cannot craft while fighting, {ctx.author.mention}')
+
+@commands.cooldown(1, 60, commands.BucketType.user)
+@bot.command()
+async def chop(ctx):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    if player_obj is None:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+    else:
+        in_fight = file_management.check_if_in_fight(ctx.author.name)
+        if in_fight is None:
+            if player_obj.gathering_tiers["choppingTier"] > 0:
+                await gather_resources(ctx, player_obj, "chopping")
+            else:
+                await ctx.send(f'You need an axe in order to chop wood, {ctx.author.mention}')
+        else:
+            await ctx.send(f'You cannot gather resources while fighting, {ctx.author.mention}')
+
+@commands.cooldown(1, 60, commands.BucketType.user)
+@bot.command()
+async def mine(ctx):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    if player_obj is None:
+        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+    else:
+        in_fight = file_management.check_if_in_fight(ctx.author.name)
+        if in_fight is None:
+            if player_obj.gathering_tiers["miningTier"] > 0:
+                await gather_resources(ctx, player_obj, "mining")
+            else:
+                await ctx.send(f'You need a pickaxe in order to mine, {ctx.author.mention}')
+        else:
+            await ctx.send(f'You cannot gather resources while fighting, {ctx.author.mention}')
 
 @bot.command()
 async def aptitudes(ctx, apt=None, apt_points=None):
@@ -380,8 +435,8 @@ async def inventory(ctx):
         inv_contents = player_obj.inventory.show_inventory()
         if inv_contents:
             embed = discord.Embed(
-                title=f'{ctx.author.name}\'s Inventory',
-                description=inv_contents + f'\n\nType `!use [item_number]` to use a certain item.\nType `!equip [item_number]` to equip a certain item.\nType`!sell [item_index] [quantity]` to sell items from your inventory at 50% its price value\n',
+                title=f'{emojis_module.ESC_BAG_ICON} {ctx.author.name}\'s Inventory',
+                description=inv_contents + f'\n\nType `!use [item_number]` to use a certain item.\nType `!equip [item_number]` to equip a certain item.\nType`!sell [item_index] [quantity]` to sell items from your inventory at 50% its price value\n\nYou currently have **{player_obj.money}{emojis_module.ESC_GOLD_ICON}**',
                 color=discord.Colour.red()
             )
             await ctx.send(embed=embed)
@@ -403,8 +458,8 @@ async def shop(ctx, arg=0, quant=1):
         if file_management.check_if_in_fight(player_obj.name) is None and not player_obj.inDungeon:
             if arg == 0:
                 embed = discord.Embed(
-                    title=f'Shop - Area {player_obj.currentArea}',
-                    description=shop_obj.show(player_obj) + f'\nUse `!shop [item_index] [quantity]` to buy an item.\nYou currently have **{player_obj.money}G**',
+                    title=f'{emojis_module.ESC_SHOP_ICON} Shop - Area {player_obj.currentArea}',
+                    description=shop_obj.show(player_obj) + f'\nUse `!shop [item_index] [quantity]` to buy an item.\nYou currently have **{player_obj.money}{emojis_module.ESC_GOLD_ICON}**',
                     color=discord.Colour.red()
                 )
                 await ctx.send(embed=embed)
@@ -466,10 +521,12 @@ async def reset_player(ctx):
         file_management.delete_player(ctx.author.name)
         await ctx.send(f'Character succesfully deleted, type !start again {ctx.author.mention}')
 
+@chop.error
+@mine.error
 @rest.error
 async def command_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
-        em = discord.Embed(title=f"Slow down!",description=f"Try again in {error.retry_after:.2f}s.")
+        em = discord.Embed(title=f"Command in cooldown",description=f"Try again in {error.retry_after:.2f}s.")
         await ctx.send(embed=em)
 
 bot.run(DISCORD_TOKEN)

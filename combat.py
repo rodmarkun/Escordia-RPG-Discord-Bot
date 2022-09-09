@@ -63,7 +63,7 @@ class Battler:
         info_crit = ""
         info_miss = ""
         info_dmg = ""
-        dmg = round(self.stats['atk'] * (100/(100 + defender.stats['def']*1.5)))
+        dmg = round(self.stats['atk'] * (100/(100 + defender.stats['def']*2.5)))
         # Check for critical attack
         #dmg, info_crit = self.check_critical(dmg)
         if self.check_critical():

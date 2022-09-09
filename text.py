@@ -3,6 +3,7 @@ import emojis
 help_text = f'{emojis.STAR_EMOJI} **General** {emojis.STAR_EMOJI}\n' \
                      '`!help` - Display all commands\n' \
                      '`!start` - Create a player in Escordia RPG\n' \
+                     '`!tutorial` - Tutorial made for newcomers\n' \
                      '`!players` - Show all players of Escordia RPG\n' \
                      f'{emojis.CHARACTER_EMOJI} **Character** {emojis.CHARACTER_EMOJI}\n' \
                      '`!profile` - Check your current profile and stats\n' \
@@ -11,18 +12,20 @@ help_text = f'{emojis.STAR_EMOJI} **General** {emojis.STAR_EMOJI}\n' \
                      '`!inn` - Fully recover your HP and MP, for a reasonable price.\n' \
                      '`!inventory` - Show all items from your inventory\n' \
                      '`!spells` - See a list with all of your spells\n' \
+                     '`!combos` - See a list with all of your combos\n' \
                      '`!aptitudes` - Show your current aptitudes\n' \
                      '`!masteries` - Show your current mastery with each type of weapon\n' \
                      f'{emojis.COIN_EMOJI} **Economy** {emojis.COIN_EMOJI}\n' \
                      '`!shop` - Buy items from the store\n' \
                      '`!sell [item_index] [quantity]` - Sell items from your inventory at 50% its price value\n' \
+                     '`!craft` - Craft items using materials\n' \
+                     '`!chop` - Chop some wood! You will need a Gathering Axe\n' \
+                     '`!mine` - Mine some ore! You will need a Gathering Pickaxe\n' \
                      f'{emojis.DAGGER_EMOJI} **Combat** {emojis.DAGGER_EMOJI}\n' \
                      '`!area` - Show info about your current area \n' \
                      '`!fight` - Fight against a monster in your area\n' \
                      '`!dungeon` - Show all dungeons in this area\n' \
                      '`!boss` - Fight against the boss of this area\n' \
-                     '`!attack` - Perform a normal attack against your opponent\n' \
-                     '`!spells [number]` - Cast a certain spell\n'
 
 tutorial_1 = f'**Tutorial** \n' \
              f'Welcome to Escordia RPG, adventurer!\n' \
@@ -43,4 +46,6 @@ tutorial_1 = f'**Tutorial** \n' \
              f'and with a decent level. The `!shop` contents change depending the area you are at.\n\n' \
              f'Whenever you level up, you will be awarded with an aptitude point. Check `!aptitudes` and assign your ' \
              f'hard-earned points to become stronger!\n\n' \
+             f'You can `!craft` items and equipment. You will need materials gathered with `!chop` and `!mine`. Be sure' \
+             f'to equip gathering tools!\n\n' \
              f'Everything else is explained in the `!help` command. Hope you have a great time in Escordia!'

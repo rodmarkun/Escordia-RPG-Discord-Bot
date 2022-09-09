@@ -55,7 +55,7 @@ class Bat(Enemy):
                  'speed': 12,
                  'critCh': 10
                  }
-        super().__init__('Bat', stats, xpReward=4, goldReward=randint(2, 5), possibleLoot=items.item_bat_wings, lootChance=60,
+        super().__init__('Bat', stats, xpReward=4, goldReward=randint(2, 5), possibleLoot=items.item_bat_wings, lootChance=75,
                          imageUrl="https://i.postimg.cc/fLsrwz3Z/Colossal-Bat.png")
 
 class Wolf(Enemy):
@@ -65,13 +65,13 @@ class Wolf(Enemy):
                     'maxMp' : 10,
                     'mp' : 10,
                     'atk' : 5,
-                    'def' : 6,
+                    'def' : 7,
                     'matk' : 1,
                     'mdef' : 3,
                     'speed' : 9,
                     'critCh' : 5
         }
-        super().__init__('Wolf', stats, xpReward=8, goldReward=randint(3, 6), possibleLoot=items.item_wolf_fur, lootChance=40, imageUrl="https://i.postimg.cc/1R65TbDJ/Mountain-Wolf.png")
+        super().__init__('Wolf', stats, xpReward=8, goldReward=randint(3, 6), possibleLoot=items.item_wolf_fur, lootChance=70, imageUrl="https://i.postimg.cc/1R65TbDJ/Mountain-Wolf.png")
 
 class LionAnt(Enemy):
     def __init__(self):
@@ -86,7 +86,7 @@ class LionAnt(Enemy):
                  'speed': 7,
                  'critCh': 15
                  }
-        super().__init__('Lion Ant', stats, xpReward=5, goldReward=randint(3, 6), possibleLoot=items.no_loot, lootChance=-1,
+        super().__init__('Lion Ant', stats, xpReward=5, goldReward=randint(3, 6), possibleLoot=items.item_insect_cloth, lootChance=40,
                          imageUrl="https://i.postimg.cc/tCq5Dgyc/Insects-Ant-Lion.png")
 
 class ColossalCaterpillar(Enemy):
@@ -102,7 +102,7 @@ class ColossalCaterpillar(Enemy):
                  'speed': 2,
                  'critCh': 1
                  }
-        super().__init__('Colossal Caterpillar', stats, xpReward=25, goldReward=randint(4, 9), possibleLoot=items.no_loot, lootChance=-1,
+        super().__init__('Colossal Caterpillar', stats, xpReward=25, goldReward=randint(4, 9), possibleLoot=items.item_insect_cloth, lootChance=40,
                          imageUrl="https://i.postimg.cc/7PV1Cy7n/Insects-Caterpillar-A.png")
 
 class GiantDragonfly(Enemy):
@@ -112,13 +112,13 @@ class GiantDragonfly(Enemy):
                  'maxMp': 10,
                  'mp': 10,
                  'atk': 7,
-                 'def': 3,
+                 'def': 4,
                  'matk': 1,
                  'mdef': 3,
                  'speed': 13,
                  'critCh': 10
                  }
-        super().__init__('Giant Dragonfly', stats, xpReward=20, goldReward=randint(5, 10), possibleLoot=items.item_dragonfly_wings, lootChance=50,
+        super().__init__('Giant Dragonfly', stats, xpReward=20, goldReward=randint(5, 10), possibleLoot=items.item_insect_cloth, lootChance=60,
                          imageUrl="https://i.postimg.cc/HskwXP9D/Insects-Dragonfly-B.png")
 
     # Area 1 Boss
@@ -129,7 +129,7 @@ class Daidarabotchi(Enemy):
                  'hp': 102,
                  'maxMp': 10,
                  'mp': 10,
-                 'atk': 10,
+                 'atk': 12,
                  'def': 8,
                  'matk': 1,
                  'mdef': 10,
@@ -225,7 +225,7 @@ class RogueSwordsman(Enemy):
                  'speed': 7,
                  'critCh': 10
                  }
-        super().__init__('Rogue Swordsman', stats, xpReward=50, goldReward=randint(20, 50), possibleLoot=items.item_rogue_badge, lootChance=50,
+        super().__init__('Rogue Swordsman', stats, xpReward=50, goldReward=randint(20, 50), possibleLoot=items.item_rogue_cloth, lootChance=70,
                          imageUrl="https://i.postimg.cc/Kck0mvrf/Rogue-Bastard-Sword.png")
 
 class RogueMonk(Enemy):
@@ -241,10 +241,10 @@ class RogueMonk(Enemy):
                  'speed': 13,
                  'critCh': 15
                  }
-        super().__init__('Rogue Monk', stats, xpReward=45, goldReward=randint(0, 30), possibleLoot=items.item_rogue_badge, lootChance=50,
+        super().__init__('Rogue Monk', stats, xpReward=45, goldReward=randint(0, 30), possibleLoot=items.item_rogue_cloth, lootChance=70,
                          imageUrl="https://i.postimg.cc/MpDD9cq6/Rogue-Dagger-Monk.png")
 
-class RogueAssasin(Enemy):
+class RogueAssassin(Enemy):
     def __init__(self):
         stats = {'maxHp': 45,
                  'hp': 45,
@@ -257,7 +257,7 @@ class RogueAssasin(Enemy):
                  'speed': 22,
                  'critCh': 25
                  }
-        super().__init__('Rogue Assasin', stats, xpReward=42, goldReward=randint(20, 45), possibleLoot=items.item_rogue_badge, lootChance=50,
+        super().__init__('Rogue Assassin', stats, xpReward=42, goldReward=randint(20, 45), possibleLoot=items.item_rogue_cloth, lootChance=70,
                          imageUrl="https://i.postimg.cc/q7DGd9NW/Rogue-Twin-Dagger.png")
 
 class EarthWorm(Enemy):
@@ -273,7 +273,7 @@ class EarthWorm(Enemy):
                  'speed': 5,
                  'critCh': 5
                  }
-        super().__init__('Earth Worm', stats, xpReward=55, goldReward=randint(15, 32), possibleLoot=items.item_earthworm_tooth, lootChance=20,
+        super().__init__('Earth Worm', stats, xpReward=55, goldReward=randint(15, 32), possibleLoot=items.item_earthworm_tooth, lootChance=50,
                          imageUrl="https://i.postimg.cc/MpW0fWRh/Cave-Dweller-Worm.png")
 
 class MountainHarpy(Enemy):
@@ -289,21 +289,21 @@ class MountainHarpy(Enemy):
                  'speed': 25,
                  'critCh': 10
                  }
-        super().__init__('Mountain Harpy', stats, xpReward=30, goldReward=randint(15, 32), possibleLoot=items.item_harpy_feather, lootChance=40,
+        super().__init__('Mountain Harpy', stats, xpReward=30, goldReward=randint(15, 32), possibleLoot=items.item_harpy_feather, lootChance=60,
                          imageUrl="https://i.postimg.cc/jdPjyPK1/Wind-Harpy.png")
 
     # Area 2 Boss:
 
 class RogueMasterGarland(Enemy):
     def __init__(self):
-        stats = {'maxHp': 235,
-                 'hp': 235,
+        stats = {'maxHp': 215,
+                 'hp': 215,
                  'maxMp': 10,
                  'mp': 10,
-                 'atk': 20,
-                 'def': 15,
+                 'atk': 18,
+                 'def': 14,
                  'matk': 1,
-                 'mdef': 16,
+                 'mdef': 14,
                  'speed': 20,
                  'critCh': 10
                  }
@@ -396,6 +396,7 @@ class SkeletonDragon(Enemy):
         self.isBoss = True
 
     # Dungeon 03 Area 2
+
 class BlackAntKnight(Enemy):
     def __init__(self):
         stats = {'maxHp': 65,
@@ -403,7 +404,7 @@ class BlackAntKnight(Enemy):
                  'maxMp': 10,
                  'mp': 10,
                  'atk': 13,
-                 'def': 12,
+                 'def': 10,
                  'matk': 1,
                  'mdef': 10,
                  'speed': 15,
@@ -418,7 +419,7 @@ class BlackAntBerserker(Enemy):
                  'hp': 74,
                  'maxMp': 10,
                  'mp': 10,
-                 'atk': 14,
+                 'atk': 10,
                  'def': 12,
                  'matk': 1,
                  'mdef': 10,
@@ -430,8 +431,8 @@ class BlackAntBerserker(Enemy):
 
 class BlackAntArcher(Enemy):
     def __init__(self):
-        stats = {'maxHp': 62,
-                 'hp': 62,
+        stats = {'maxHp': 52,
+                 'hp': 52,
                  'maxMp': 10,
                  'mp': 10,
                  'atk': 8,
@@ -446,27 +447,27 @@ class BlackAntArcher(Enemy):
 
 class BlackAntProtector(Enemy):
     def __init__(self):
-        stats = {'maxHp': 80,
-                 'hp': 80,
+        stats = {'maxHp': 90,
+                 'hp': 90,
                  'maxMp': 10,
                  'mp': 10,
-                 'atk': 7,
-                 'def': 18,
+                 'atk': 6,
+                 'def': 24,
                  'matk': 1,
                  'mdef': 13,
                  'speed': 5,
                  'critCh': 1
                  }
-        super().__init__('Black Ant Knight', stats, xpReward=100, goldReward=randint(15, 55), possibleLoot=items.no_loot, lootChance=-1,
+        super().__init__('Black Ant Protector', stats, xpReward=100, goldReward=randint(15, 55), possibleLoot=items.no_loot, lootChance=-1,
                          imageUrl="https://i.postimg.cc/RhXy8gh4/Insects-Black-Ant-Protector.png")
 
 class BlackAntQueen(Enemy):
     def __init__(self):
-        stats = {'maxHp': 180,
-                 'hp': 180,
+        stats = {'maxHp': 170,
+                 'hp': 170,
                  'maxMp': 10,
                  'mp': 10,
-                 'atk': 18,
+                 'atk': 16,
                  'def': 12,
                  'matk': 1,
                  'mdef': 12,
@@ -480,7 +481,7 @@ class BlackAntQueen(Enemy):
 area_1_enemies = [Wolf, Bat, LionAnt, ColossalCaterpillar, GiantDragonfly]
 area_1_boss = Daidarabotchi
 
-area_2_enemies = [RogueSwordsman, RogueMonk, RogueAssasin, EarthWorm, MountainHarpy]
+area_2_enemies = [RogueSwordsman, RogueMonk, RogueAssassin, EarthWorm, MountainHarpy]
 area_2_boss = RogueMasterGarland
 
 dungeon_1_enemies = [GoblinRaider, GoblinArcher, GoblinMage]

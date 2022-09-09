@@ -11,9 +11,9 @@ class Shop:
         index = 1
         for item in self.items_by_area[player.currentArea]:
             if item.objectType != 'Weapon':
-                items_txt += f'{index} - {emojis.obj_to_emoji[item.objectType]} {item.show_info_trader()}\n'
+                items_txt += f'{index} - {item.show_info_trader()}\n'
             else:
-                items_txt += f'{index} - {emojis.weapon_to_emoji[item.objectSubType]} {item.show_info_trader()}\n'
+                items_txt += f'{index} - {item.show_info_trader()}\n'
             index += 1
         return items_txt
 

@@ -10,6 +10,7 @@ from StringProgressBar import progressBar
 
 masteries_leveling = {"lvl" : 1, "xp" : 0, "xpToNextLvl" : 150}
 masteries = {"Swords" : masteries_leveling, "Axes & Hammers" : masteries_leveling, "Daggers" : masteries_leveling, "Bows" : masteries_leveling, "Staffs & Scythes" : masteries_leveling}
+gathering_equipment = ['Pickaxe', 'Axe']
 
 class Player(combat.Battler):
     '''
@@ -49,6 +50,10 @@ class Player(combat.Battler):
                             'Armor': None,
                             'Weapon': None,
                             'Accessory' : None}  # Player's equipment, can be further expanded
+        self.gathering_equipment = {'Pickaxe' : None,
+                                    'Axe' : None}
+        self.gathering_tiers = {'miningTier' : 0,
+                                 'choppingTier' : 0}
         self.money = 20  # Current money
         self.combos = []  # Player's selection of combos (atk, cp)
         self.spells = []  # Player's selection of spells (matk, mp)
@@ -65,10 +70,13 @@ class Player(combat.Battler):
 
         :return: Info string
         '''
-        equipment_names ={"Helmet" : "None", "Armor" : "None", "Weapon" : "None", "Accessory" : "None"}
+        equipment_names ={"Helmet" : "None", "Armor" : "None", "Weapon" : "None", "Accessory" : "None", "Pickaxe" : "None", "Axe" : "None"}
         for item in self.equipment:
             if self.equipment[item] is not None:
-                equipment_names[item] = self.equipment[item]['name']
+                equipment_names[item] = self.equipment[item]['name'] + " " + self.equipment[item]["emoji"]
+        for item in self.gathering_equipment:
+            if self.gathering_equipment[item] is not None:
+                equipment_names[item] = self.gathering_equipment[item]['name'] + " " + self.gathering_equipment[item]["emoji"]
 
         return f'**Player Name**: {self.name}\n' \
                f'**Level**: {self.lvl}\n' \
@@ -95,7 +103,10 @@ class Player(combat.Battler):
                f'**Helmet**: {equipment_names["Helmet"]}\n' \
                f'**Armor**: {equipment_names["Armor"]}\n' \
                f'**Weapon**: {equipment_names["Weapon"]}\n' \
-               f'**Accesory**: {equipment_names["Accessory"]}\n' \
+               f'**Accessory**: {equipment_names["Accessory"]}\n' \
+               f'**----------------**\n' \
+               f'**Gathering Pickaxe**: {equipment_names["Pickaxe"]}\n' \
+               f'**Gathering Axe**: {equipment_names["Axe"]}\n' \
                f'**----------------**\n' \
                f'**Aptitude Points**: {self.aptitudePoints}\n' \
                f'**Money**: {self.money}\n' \
@@ -161,23 +172,34 @@ class Player(combat.Battler):
         '''
         info = ''
         if type(equipment) == inventory.Equipment:
-            if self.equipment[equipment.objectType] is not None:
-                actualEquipment = inventory.createItem(self.equipment[equipment.objectType])
-                info += f'{actualEquipment.name} has been unequiped.\n'
-                self.inventory.add_item(actualEquipment)
-                for stat in actualEquipment.statChangeList:
-                    self.stats[stat] -= actualEquipment.statChangeList[stat]
+            if equipment.objectType not in gathering_equipment:
+                if self.equipment[equipment.objectType] is not None:
+                    actualEquipment = inventory.createItem(self.equipment[equipment.objectType])
+                    info += f'{actualEquipment.name} has been unequiped.\n'
+                    self.inventory.add_item(actualEquipment)
+                    for stat in actualEquipment.statChangeList:
+                        self.stats[stat] -= actualEquipment.statChangeList[stat]
+            else:
+                if self.gathering_equipment[equipment.objectType] is not None:
+                    actualEquipment = inventory.createItem(self.gathering_equipment[equipment.objectType])
+                    info += f'{actualEquipment.name} has been unequiped.\n'
+                    self.inventory.add_item(actualEquipment)
 
             # Adds stats to player
-            for stat in equipment.statChangeList:
-                self.stats[stat] += equipment.statChangeList[stat]
-            self.equipment[equipment.objectType] = equipment.create_item(1)
+            if equipment.objectType not in gathering_equipment:
+                for stat in equipment.statChangeList:
+                    self.stats[stat] += equipment.statChangeList[stat]
+                self.equipment[equipment.objectType] = equipment.create_item(1)
+            else:
+                for gath_tier in equipment.statChangeList:
+                    self.gathering_tiers[gath_tier] = equipment.statChangeList[gath_tier]
+                self.gathering_equipment[equipment.objectType] = equipment.create_item(1)
 
             self.inventory.decrease_item_amount(equipment, 1)
             info += f'{equipment.name} has been equipped.'
-            print(equipment.show_stats())
         else:
             if equipment is not None:
+                print(type(equipment))
                 info += f'{equipment.name} is not equipable.'
         return info
 
@@ -281,11 +303,13 @@ class Player(combat.Battler):
                         "aptitudes" : self.aptitudes,
                         "aptitudePoints" : self.aptitudePoints,
                         "equipment" : self.equipment,
+                        "gathering_equipment" : self.gathering_equipment,
                         "money" : self.money,
                         "isAlly" : self.isAlly,
                         "currentArea" : self.currentArea,
                         "defeatedBosses" : self.defeatedBosses,
                         "inDungeon" : self.inDungeon,
+                        "gathering_tiers" : self.gathering_tiers,
                         "combos" : self.combos,
                         "spells" : self.spells}
         return json.dumps(player_data, default=lambda o: o.__dict__, sort_keys=True)
@@ -301,11 +325,13 @@ def createPlayer(player_json):
     player.aptitudes = player_json['aptitudes']
     player.aptitudePoints = player_json['aptitudePoints']
     player.equipment = player_json['equipment']
+    player.gathering_equipment = player_json['gathering_equipment']
     player.money = player_json['money']
     player.isAlly = player_json['isAlly']
     player.currentArea = player_json['currentArea']
     player.defeatedBosses = player_json['defeatedBosses']
     player.inDungeon = player_json['inDungeon']
+    player.gathering_tiers = player_json['gathering_tiers']
     player.spells = player_json['spells']
     player.combos = player_json['combos']
     player.inventory = file_management.get_inventory(player.name)

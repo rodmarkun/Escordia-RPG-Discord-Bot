@@ -4,11 +4,13 @@ import emojis
 import file_management
 import random
 import combat as combat_module
+import items
 import player as player_module
 import dungeons as dungeons_module
 import fight as fight_module
 import emojis as emojis_module
 import area as area_module
+import crafting as crafting_module
 
 from StringProgressBar import progressBar
 
@@ -162,6 +164,49 @@ async def win_fight(ctx, in_fight):
     if lvl_up:
         await ctx.send(f'{ctx.author.mention} - {lvl_up}')
 
+async def gather_resources(ctx, player_obj, action):
+    gathering_nodes = items.gathering_nodes
+    tier = 1
+    if action == "mining":
+        tier = player_obj.gathering_tiers["miningTier"]
+    elif action == "chopping":
+        tier = player_obj.gathering_tiers["choppingTier"]
+    acquire_list = gathering_nodes[action][tier-1]
+    obtained_txt = ''
+    for i in range(random.randint(1, 3)):
+        item = random.choice(acquire_list).create_item()
+        player_obj.inventory.add_item(item)
+        obtained_txt += f'You obtained {item.emoji} x{item.amount} {item.name}!\n'
+    file_management.update_player(player_obj)
+    embed = discord.Embed(
+        title=f'{action.capitalize()}',
+        description=obtained_txt,
+        color=discord.Colour.red()
+    )
+    await ctx.send(embed=embed)
+
+async def craft_item(ctx, object_name, player_obj):
+    recipes = crafting_module.all_recipes
+    for recipe_tier in recipes:
+        for recipe in recipe_tier:
+            if recipe["craft"].name.lower().replace(" ", "_") == object_name.lower():
+                all_materials_needed = True
+                i = 0
+                for item in recipe["items"]:
+                    if not player_obj.inventory.check_for_item_and_amount(item.name, recipe["quantity"][i]):
+                        all_materials_needed = False
+                    i += 1
+                if all_materials_needed:
+                    i = 0
+                    for item in recipe["items"]:
+                        player_obj.inventory.decrease_item_amount(item, recipe["quantity"][i])
+                        i += 1
+                    player_obj.inventory.add_item(recipe["craft"].create_item(1))
+                    file_management.update_player(player_obj)
+                    await ctx.send(f'{ctx.author.mention}, you successfully crafted a {recipe["craft"].name}.')
+                else:
+                    await ctx.send(f'{ctx.author.mention}, you do not have enough materials to craft {recipe["craft"].name}.')
+
 # Embeds
 
 def embed_fight_msg(ctx, enemy, player_obj):
@@ -193,6 +238,7 @@ async def send_area_embed(player_obj, ctx):
         description=areas_txt,
         color=discord.Colour.red()
     )
+    embed.set_image(url="https://i.postimg.cc/nLTrXZZV/Map.png")
     await ctx.send(embed=embed)
 
 async def send_player_profile(player_json, ctx, search):
@@ -241,6 +287,31 @@ def embed_victory_msg(ctx, enemy, player_obj, xp, gold, looted):
     embed.set_thumbnail(url=enemy.imageUrl)
     embed.set_image(url=ctx.author.avatar.url)
     return embed
+
+async def show_player_crafting_tiers(player_obj, ctx):
+    tiers_txt = "These are your unlocked crafting tiers. Use `!craft [tier]` to see all recipes from that tier. " \
+                "For example: `!craft tier1` (Recipes from Tier 1).\n\n"
+    i = 1
+    for tier in crafting_module.all_recipes:
+        if player_obj.defeatedBosses + 1 >= i:
+            tiers_txt += f'Tier{i} - **Unlocked**\n'
+        else:
+            tiers_txt += f'Tier{i} - Locked\n'
+        i += 1
+    embed = discord.Embed(
+        title=f'Crafting Tiers',
+        description=tiers_txt + f'\nTo unlock more tiers you will need to defeat the !boss of the next areas.',
+        color=discord.Colour.red()
+    )
+    await ctx.send(embed=embed)
+
+async def show_player_crafts(player_obj, tier, ctx):
+    embed = discord.Embed(
+        title=f'Crafting - Tier {tier}',
+        description=crafting_module.show_crafting_recipes(tier, player_obj),
+        color=discord.Colour.red()
+    )
+    await ctx.send(embed=embed)
 
 async def show_player_spells(player_obj, ctx):
     embed = discord.Embed(

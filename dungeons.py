@@ -42,8 +42,8 @@ def createDungeon(dungeon_json):
     dungeon.loot_rooms = dungeon_json['loot_rooms']
     return dungeon
 
-dungeon_goblins_nest = Dungeon("Goblins Den", enemies.dungeon_1_enemies, items.dungeon_area_1_loot, enemies.GoblinElite, 2, 2, 3, 3, '', 1, 4)
-dungeon_enchanted_graveyard = Dungeon("Enchanted Graveyard", enemies.dungeon_2_enemies, items.dungeon_area_2_loot, enemies.SkeletonDragon, 3, 2, 4, 3, '', 2, 8)
-dungeon_black_ant_nest = Dungeon("Black Ant Nest", enemies.dungeon_3_enemies, items.dungeon_area_2_loot, enemies.BlackAntQueen, 4, 0, 4, 0, '', 3, 10)
+dungeon_goblins_nest = Dungeon("Goblins Den", enemies.dungeon_1_enemies, items.dungeon_area_1_loot, enemies.GoblinElite, 2, 1, 3, 3, '', 1, 4)
+dungeon_enchanted_graveyard = Dungeon("Enchanted Graveyard", enemies.dungeon_2_enemies, items.dungeon_area_2_loot, enemies.SkeletonDragon, 3, 2, 3, 3, '', 2, 7)
+dungeon_black_ant_nest = Dungeon("Black Ant Nest", enemies.dungeon_3_enemies, items.dungeon_area_3_loot, enemies.BlackAntQueen, 3, 2, 3, 3, '', 3, 9)
 
 all_dungeons = {1 : dungeon_goblins_nest, 2 : dungeon_enchanted_graveyard, 3 : dungeon_black_ant_nest}

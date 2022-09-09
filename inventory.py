@@ -2,6 +2,8 @@ import json
 import skills
 import emojis
 
+money_emoji = emojis.ESC_GOLD_ICON
+
 class Inventory():
     '''
     Manages player's inventory and items. Can be modified to have a certain capacity.
@@ -29,9 +31,9 @@ class Inventory():
 
         for i in self.items:
             if self.items[index-1].objectType != 'Weapon':
-                inv_str += f'{index} - {emojis.obj_to_emoji[self.items[index-1].objectType]} {self.items[index-1].show_info()}\n'
+                inv_str += f'{index} - {self.items[index-1].show_info()}\n'
             else:
-                inv_str += f'{index} - {emojis.weapon_to_emoji[self.items[index - 1].objectSubType]} {self.items[index - 1].show_info()}\n'
+                inv_str += f'{index} - {self.items[index - 1].show_info()}\n'
             index += 1
         return inv_str
 
@@ -44,6 +46,13 @@ class Inventory():
         '''
         item = self.items[index]
         return item.amount
+
+    def check_for_item_and_amount(self, object_name, amount):
+        for item in self.items:
+            if item.name.lower() == object_name.lower():
+                if item.amount >= amount:
+                    return True
+        return False
 
     def drop_item(self, item_index, amount):
         '''
@@ -159,6 +168,8 @@ class Item():
         self.amount = amount
         self.individualValue = individualValue
         self.objectType = objectType
+        if self.objectType:
+            self.emoji = emojis.obj_to_emoji[self.objectType]
 
     def show_info(self):
         '''
@@ -168,7 +179,7 @@ class Item():
         info : str
             String with amount, name, objectType and individual value of this object.
         '''
-        return f'[x{self.amount}] **{self.name}** ({self.objectType}) - {self.individualValue}G'
+        return f'[x{self.amount}] {self.emoji} **{self.name}** ({self.objectType}) - {self.individualValue}{money_emoji}'
 
     def show_info_trader(self):
         '''
@@ -178,13 +189,16 @@ class Item():
         info : str
             String with amount, name, objectType and individual value of this object.
         '''
-        return f'**{self.name}** ({self.objectType}) - {self.individualValue}G'
+        return f'{self.emoji} **{self.name}** ({self.objectType}) - {self.individualValue}{money_emoji}'
     
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
 
+    def create_item(self):
+        return Item(self.name, self.description, self.amount, self.individualValue, self.objectType)
+
 def createItem(item_json):
-    equipable_items = ['Helmet', 'Armor', 'Weapon', 'Accessory']
+    equipable_items = ['Helmet', 'Armor', 'Weapon', 'Accessory', 'Pickaxe', 'Axe']
     if item_json['objectType'] in equipable_items:
         item = Equipment(item_json['name'], item_json['description'], int(item_json['amount']), int(item_json['individualValue']), item_json['objectType'], item_json['objectSubType'], item_json['statChangeList'])
     elif item_json['objectType'] == 'Potion':
@@ -214,12 +228,14 @@ class Equipment(Item):
         super().__init__(name, description, amount, individual_value, objectType)
         self.objectSubType = objectSubType
         self.statChangeList = statChangeList
+        if self.objectType == 'Weapon':
+            self.emoji = emojis.weapon_to_emoji[self.objectSubType]
 
     def show_info_trader(self):
-        return f'**{self.name}** ({self.objectType}) [{self.show_stats()}] - {self.individualValue}G'
+        return f'{self.emoji} **{self.name}** ({self.objectType}) [{self.show_stats()}] - {self.individualValue}{money_emoji}'
 
     def show_info(self):
-        return f'[x{self.amount}] **{self.name}** ({self.objectType}) [{self.show_stats()}] - {self.individualValue}G'
+        return f'[x{self.amount}] {self.emoji} **{self.name}** ({self.objectType}) [{self.show_stats()}] - {self.individualValue}{money_emoji}'
 
     def show_stats(self):
         '''
