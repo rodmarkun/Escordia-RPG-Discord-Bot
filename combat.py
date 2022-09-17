@@ -10,20 +10,14 @@ class Battler:
     '''
     Parent class for all instances that can enter in combat.
     A Battler will always be either an Enemy, a Player's ally or the Player himself
-
-    Attributes:
-    name : str
-        Name of the battler.
-    stats : dict
-        Stats of the battler, dictionary ex: {'atk' : 3}.
-    alive : bool
-        Bool for battler being alive or dead.
-    buffsAndDebuffs : list
-        List of buffs and debuffs battler currently has.
-    isAlly : bool
-        Bool for battler being a Player's ally or not.
     '''
     def __init__(self, name, stats) -> None:
+        '''
+        Creates a new battler
+
+        :param name: Name of the battler.
+        :param stats: Stats of the battler in dictionary format. Ex: {'atk' : 3}.
+        '''
         self.name = name
         self.stats = stats
         self.alive = True
@@ -35,9 +29,8 @@ class Battler:
         Function for battlers taking damage from any source.
         Subtracts the damage quantity from its health. Also checks if it dies.
 
-        Parameters:
-        dmg : int
-            Quantity of damage dealt
+        :param dmg: Damage about to be taken by battler
+        :return: Info about damage taken
         '''
         if dmg < 0: dmg = 0
         self.stats['hp'] -= dmg
@@ -53,11 +46,10 @@ class Battler:
         Normal attack all battlers have.
 
         Damage is calculated as follows:
-        attacker_atk * (100/(100 + defender_def * 1.5))
+        attacker_atk * (100/(100 + defender_def * 2.5))
 
-        Parameters:
-        defender : Battler
-            Defending battler
+        :param defender: Defending battler
+        :return: Attack info string
         '''
         info = f'{self.name} attacks!\n'
         info_crit = ""
@@ -74,29 +66,21 @@ class Battler:
             info_dmg = defender.take_dmg(dmg)
         else:
             info_miss = f'{self.name}\'s attack missed!\n'
-            info_crit = ''
         return info + info_crit + info_miss + info_dmg
 
     def magic_attack(self, defender):
         '''
-            Magic attacks mage enemies perform.
+        Magic attacks mage enemies perform.
+        They cannot be evaded.
 
-            Parameters:
-            defender : Battler
-                Defending battler
+        :param defender: Defending battler
+        :return: Attack info string
         '''
         info = f'{self.name} performs a magic attack!\n'
         info_miss = ""
-        info_dmg = ""
         dmg = round(self.stats['matk'] * (100 / (100 + defender.stats['mdef'] * 1.5)))
-        # Check for critical attack
-        # dmg, info_crit = self.check_critical(dmg)
-        # Check for missed attack
-        if not check_miss(self, defender):
-            info_dmg = defender.take_dmg(dmg)
-        else:
-            info_miss = f'{self.name}\'s magic attack missed!\n'
-            info_crit = ''
+
+        info_dmg = defender.take_dmg(dmg)
         return info + info_miss + info_dmg
 
     def check_critical(self):
@@ -104,23 +88,14 @@ class Battler:
         Checks if an attack is critical. If it is, increments its damage.
 
         Critical chance comes by the battler's stat: 'critCh'
-
-        Returns:
-        True/False : bool
-            True if attack is critical, False if it is not
         '''
-        if self.stats['critCh'] > random.randint(0, 100):
-            return True
-        else:
-            return False
+        return self.stats['critCh'] > random.randint(0, 100)
 
     def recover_mp(self, amount):
         '''
         Battler recovers certain amount of 'mp' (Mana Points).
 
-        Parameters:
-        amount : int
-            Amount of mp recovered
+        :param amount: Amount of MP recovered
         '''
         if self.stats['mp'] + amount > self.stats['maxMp']:
             fully_recover_mp(self)
@@ -131,16 +106,13 @@ class Battler:
         '''
         Battler recovers certain amount of 'hp' (Health Points).
 
-        Parameters:
-        amount : int
-            Amount of hp recovered
+        :param amount: Amount of HP recovered
         '''
         if self.stats['hp'] + amount > self.stats['maxHp']:
             fully_heal(self)
         else:
             self.stats['hp'] += amount
 
-# Returns True if attack misses, False if it doesn't
 def check_miss(attacker, defender):
     '''
     Checks if an attack misses or not. Miss chance is determined by the following formula:
@@ -150,30 +122,19 @@ def check_miss(attacker, defender):
     I tried different formulas and this one ended up being pretty competent. Check if
     it fits you anyway.
 
-    Parameters:
-    attacker : Battler
-        Battler that performs the attack
-    defender : Battler
-        Defending battler
-
-    Returns:
-    True/False : Bool
-        True if the attack missed. False if it doesn't.
+    :param attacker: Attacking Battler
+    :param defender: Defending Battler
+    :return: True if attack misses. False if it does not.
     '''
     chance = math.floor(math.sqrt(max(0, (5 * defender.stats['speed'] - attacker.stats['speed'] * 2))))
-    if chance > random.randint(0, 100):
-        return True
-    return False
+    return chance > random.randint(0, 100)
 
 def check_turns_buffs_and_debuffs(target, deactivate):
     '''
     Checks if buffs and debuffs should still be active (checks its turn count).
 
-    Parameters:
-    target : Battler
-        Battler whose buffs and debuffs should be checked
-    deactivate : bool
-        If true, buffs and debuffs deactivate instantly regardless of turn count
+    :param target: Battler whose buffs and debuffs should be checked
+    :param deactivate: If true, buffs and debuffs deactivate instantly regardless of turn count
         (useful when ending a combat or any similar situation). If false, acts
         normally.
     '''
@@ -186,21 +147,17 @@ def check_turns_buffs_and_debuffs(target, deactivate):
 
 def fully_heal(target):
     '''
-    Fully heals a target.
+    Fully heals a target
 
-    Parameters:
-    target : Battler
-        Battler to fully heal
+    :param target: Target battler
     '''
     target.stats['hp'] = target.stats['maxHp']
 
 def fully_recover_mp(target):
     '''
-    Fully recovers target's mp.
+    Fully recovers target's MP
 
-    Parameters:
-    target : Battler
-        Battler to fully recover
+    :param target: Target battler
     '''
     target.stats['mp'] = target.stats['maxMp']
 

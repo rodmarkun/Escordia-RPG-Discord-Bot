@@ -2,6 +2,12 @@ import emojis
 import items
 
 def show_crafting_recipes(tier, player_obj):
+    '''
+    Shows all crafting recipes from a certain tier, also adds info on whether the player can craft it or not.
+
+    :param tier: Recipe Tier
+    :param player_obj: Player object who called the command
+    '''
     recipe_txt = ""
     for recipe in all_recipes[tier-1]:
         recipe_txt += f'**Item**: `{recipe["craft"].name.lower().replace(" ", "_")}` {recipe["craft"].show_info_trader()}\n**Materials Needed:** '
@@ -23,6 +29,9 @@ def show_crafting_recipes(tier, player_obj):
     recipe_txt += "\nType `!craft [item_name]` to craft an item. Use the highlighted item name above. For example: `!craft bronze_armor`."
     return recipe_txt
 
+'''
+///////////////////////////////// Recipe Tiers ////////////////////////////////////
+'''
 recipes_tier1 = [{"craft" : items.weapon_longsword, "items" : [items.gathering_oakWood, items.gathering_tin], "quantity" : [3, 2]},
                  {"craft" : items.weapon_dagger, "items" : [items.gathering_oakWood, items.gathering_copper], "quantity" : [2, 2]},
                  {"craft" : items.weapon_staff, "items" : [items.gathering_oakWood, items.gathering_copper, items.gathering_tin], "quantity" : [2, 1, 1]},
@@ -32,6 +41,7 @@ recipes_tier1 = [{"craft" : items.weapon_longsword, "items" : [items.gathering_o
                  {"craft" : items.helmet_wolfHelmet, "items" : [items.item_insect_cloth, items.item_wolf_fur], "quantity" : [1, 2]},
                  {"craft" : items.acc_copperRing, "items" : [items.gathering_copper], "quantity" : [2]}
                  ]
+
 recipes_tier2 = [{"craft" : items.weapon_huntingBow, "items" : [items.gathering_cedarWood, items.item_insect_cloth, items.item_harpy_feather], "quantity" : [3, 2, 2]},
                  {"craft" : items.weapon_broadsword, "items" : [items.gathering_mapleWood, items.gathering_iron], "quantity" : [2, 5]},
                  {"craft" : items.weapon_ancientWarhammer, "items" : [items.gathering_mapleWood, items.gathering_brass], "quantity" : [3, 4]},
@@ -43,4 +53,8 @@ recipes_tier2 = [{"craft" : items.weapon_huntingBow, "items" : [items.gathering_
                  {"craft" : items.acc_smallWand, "items" : [items.gathering_cedarWood, items.item_earthworm_tooth], "quantity" : [2, 1]},
                  {"craft" : items.acc_ironRing, "items" : [items.gathering_iron, items.gathering_brass], "quantity" : [2, 2]},
                  ]
+
+'''
+///////////////////////////////// All Recipes ////////////////////////////////////
+'''
 all_recipes = [recipes_tier1, recipes_tier2]

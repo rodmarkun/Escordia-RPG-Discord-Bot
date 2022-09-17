@@ -2,21 +2,21 @@ import json
 import skills
 import emojis
 
+# Emoji used for money/gold/coins
 money_emoji = emojis.ESC_GOLD_ICON
 
 class Inventory():
     '''
     Manages player's inventory and items. Can be modified to have a certain capacity.
     It is also used for shops.
-
-    Attributes:
-    player_name : String
-        Owner's name of the inventory
-    items : List
-        List of current items in the inventory
     '''
 
     def __init__(self, player_name) -> None:
+        '''
+        Creates a new inventory
+
+        :param player_name: Player owner of this inventory
+        '''
         self.player_name = player_name
         self.items = []
 
@@ -48,6 +48,13 @@ class Inventory():
         return item.amount
 
     def check_for_item_and_amount(self, object_name, amount):
+        '''
+        Checks if player has an X amount of a certain item. Used for crafting.
+
+        :param object_name: Name of the object to check
+        :param amount: Amount to check
+        :return: True if there is an amount >= X of the item
+        '''
         for item in self.items:
             if item.name.lower() == object_name.lower():
                 if item.amount >= amount:
@@ -132,9 +139,20 @@ class Inventory():
                     self.items.remove(actualItem)
 
     def toJSON(self):
+        '''
+        Converts an inventory instance to a JSON
+
+        :return: Inventory JSON
+        '''
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
 
 def createInventory(inv_json):
+    '''
+    Creates an inventory from an inventory JSON
+
+    :param inv_json: Inventory JSON
+    :return: Inventory instance
+    '''
     inv = Inventory(inv_json['player_name'])
     for item in inv_json['items']:
         item_obj = createItem(item)
@@ -142,27 +160,21 @@ def createInventory(inv_json):
         pass
     return inv
 
-class Item():
+class Item:
     '''
-    Items are always stored in a certain inventory. They can be either:
-    - Equipment (Weapons & Armor)
-    - Consumables (Potions & Grimoires)
-
-    Attributes:
-    name : str
-        Name of the item
-    description : str
-        Description of the item
-    amount : int
-        Amount of this item in this inventory
-    individualValue : int
-        Amount of gold one of this item is worth
-    objectType : str
-        Object type
+    Items with various functions. Can be stored inside an inventory.
     '''
-
 
     def __init__(self, name, description, amount, individualValue, objectType) -> None:
+        '''
+        Creates an Item
+
+        :param name: Item name
+        :param description: Item description
+        :param amount: Item amount (In 99% of cases you want this to 1)
+        :param individualValue: Individual value of the item
+        :param objectType: Object type. Relevant to Icons, Masteries, and other stuff
+        '''
         self.name = name
         self.description = description
         self.amount = amount
@@ -173,31 +185,43 @@ class Item():
 
     def show_info(self):
         '''
-        Shows the info of this specific object.
+        Shows info of a certain item.
 
-        Returns:
-        info : str
-            String with amount, name, objectType and individual value of this object.
+        :return: Item info string.
         '''
         return f'[x{self.amount}] {self.emoji} **{self.name}** ({self.objectType}) - {self.individualValue}{money_emoji}'
 
     def show_info_trader(self):
         '''
-        Shows the info of this specific object.
+        Shows info of a certain item. Formatted without the amount, mainly for traders.
 
-        Returns:
-        info : str
-            String with amount, name, objectType and individual value of this object.
+        :return: Item info string.
         '''
         return f'{self.emoji} **{self.name}** ({self.objectType}) - {self.individualValue}{money_emoji}'
     
     def toJSON(self):
+        '''
+        Converts an item instance into a JSON
+
+        :return: Item JSON
+        '''
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
 
     def create_item(self):
+        '''
+        Creates a duplicate from an item. Useful when buying items.
+
+        :return: Item copy
+        '''
         return Item(self.name, self.description, self.amount, self.individualValue, self.objectType)
 
 def createItem(item_json):
+    '''
+    Creates an Item instance from an Item JSON
+
+    :param item_json: Item JSON
+    :return: Item instance
+    '''
     equipable_items = ['Helmet', 'Armor', 'Weapon', 'Accessory', 'Pickaxe', 'Axe']
     if item_json['objectType'] in equipable_items:
         item = Equipment(item_json['name'], item_json['description'], int(item_json['amount']), int(item_json['individualValue']), item_json['objectType'], item_json['objectSubType'], item_json['statChangeList'])
@@ -211,20 +235,27 @@ def createItem(item_json):
 
 class Equipment(Item):
     '''
-    Items player can equip for increased stats and unique abilities (combos).
+    Items player can equip for increased stats.
+    '''
 
-    Parameters:
-    statChangeList : Dictionary
-        Dictionary that defines the changes in stats after equipping this item.
+    def __init__(self, name, description, amount, individual_value, objectType, objectSubType, statChangeList) -> None:
+        '''
+        Creates a new equipment instance.
+
+        :param name: Equipment's name
+        :param description: Equipment's description
+        :param amount: Amount of this equipment
+        :param individual_value: Individual value of this equipment
+        :param objectType: Object type of this equipment
+        :param objectSubType: Object subtype of this equipment (Mainly used for different types of weapons)
+        :param statChangeList: Dictionary that defines the changes in stats after equipping this item.
         Example:
         {'hp' : 3,
         'atk' : 2,
         'speed' : -2
         }
         This would increase hp by 3, atk by 2 and decrease speed by 2.
-    '''
-
-    def __init__(self, name, description, amount, individual_value, objectType, objectSubType, statChangeList) -> None:
+        '''
         super().__init__(name, description, amount, individual_value, objectType)
         self.objectSubType = objectSubType
         self.statChangeList = statChangeList
@@ -232,18 +263,26 @@ class Equipment(Item):
             self.emoji = emojis.weapon_to_emoji[self.objectSubType]
 
     def show_info_trader(self):
+        '''
+        Shows info of certain equipment. Formatted without the amount, mainly for traders.
+
+        :return: Item info string.
+        '''
         return f'{self.emoji} **{self.name}** ({self.objectType}) [{self.show_stats()}] - {self.individualValue}{money_emoji}'
 
     def show_info(self):
+        '''
+        Shows info of certain equipment.
+
+        :return: Item info string.
+        '''
         return f'[x{self.amount}] {self.emoji} **{self.name}** ({self.objectType}) [{self.show_stats()}] - {self.individualValue}{money_emoji}'
 
     def show_stats(self):
         '''
-        Shows this equipment stats.
+        Shows equipment's stats
 
-        Returns:
-        statsString : str
-            String which contains all the stat changes of this equipment.
+        :return: Stat info string
         '''
         statsString = ' '
         for stat in self.statChangeList:
@@ -254,6 +293,12 @@ class Equipment(Item):
         return statsString
 
     def create_item(self, amount):
+        '''
+        Creates a copy of a certain equipment
+
+        :param amount: Amount of copies to be made
+        :return: Equipment object
+        '''
         return Equipment(self.name, self.description, amount, self.individualValue, self.objectType, self.objectSubType,
                          self.statChangeList)
 
@@ -261,15 +306,20 @@ class Equipment(Item):
 class Potion(Item):
     '''
     Players use potions for recovering either MP or HP.
-
-    Attributes:
-    stat : str
-        Stat to recover
-    amountToChange : int
-        Amount to recover
     '''
 
     def __init__(self, name, description, amount, individual_value, objectType, stat, amountToChange) -> None:
+        '''
+        Creates a new Potion object.
+
+        :param name: Potion name
+        :param description: Potion description
+        :param amount: Potion amount
+        :param individual_value: Individual value
+        :param objectType: Object type (Potion)
+        :param stat: Stat to change
+        :param amountToChange: Amount to change
+        '''
         super().__init__(name, description, amount, individual_value, objectType)
         self.stat = stat
         self.amountToChange = amountToChange
@@ -278,9 +328,8 @@ class Potion(Item):
         '''
         Activates the use of this object. (Recovers HP/MP)
 
-        Parameters:
-        caster : Player
-            Player to recover.
+        :param caster: Player which uses the object
+        :return: Activation info string
         '''
         if self.stat == 'hp':
             caster.heal(self.amountToChange)
@@ -289,6 +338,12 @@ class Potion(Item):
         return f'{caster.name} uses a {self.name} and recovers {self.amountToChange}{self.stat}!'
 
     def create_item(self, amount):
+        '''
+        Creates a copy of a certain potion
+
+        :param amount: Amount of copies to be made
+        :return: Potion object
+        '''
         return Potion(self.name, self.description, amount, self.individualValue, self.objectType, self.stat,
                       self.amountToChange)
 
@@ -296,13 +351,19 @@ class Potion(Item):
 class Grimoire(Item):
     '''
     Grimoires are items the player can use for learning new spells.
-
-    Attributes:
-    spell : Spell
-        Spell the player will learn.
     '''
 
     def __init__(self, name, description, amount, individual_value, objectType, spell) -> None:
+        '''
+        Creates a new Grimoire object
+
+        :param name: Grimoire name
+        :param description: Grimoire description
+        :param amount: Item amount
+        :param individual_value: Individual value
+        :param objectType: Object type (Grimoire)
+        :param spell: Spell to be learnt
+        '''
         super().__init__(name, description, amount, individual_value, objectType)
         self.spell = spell
 
@@ -310,9 +371,8 @@ class Grimoire(Item):
         '''
         Activates the use of this object. (Learns a new spell)
 
-        Parameters:
-        caster : Player
-            Player which learns the spell.
+        :param caster: Player which will learn the spell
+        :return: Activation info string
         '''
         alreadyLearnt = False
         spell_learnt = skills.createSpell(self.spell)
@@ -328,4 +388,10 @@ class Grimoire(Item):
             return f'Using a \"{self.name}\" you have learnt to cast: \"{spell_learnt.name}\"!'
 
     def create_item(self, amount):
+        '''
+        Creates a copy of a certain grimoire
+
+        :param amount: Amount of copies to be made
+        :return: Grimoire object
+        '''
         return Grimoire(self.name, self.description, amount, self.individualValue, self.objectType, self.spell)

@@ -31,6 +31,7 @@ def check_if_exists(player_name):
 def write_fight(fight_obj):
     '''
     Writes a new Fight object into "fights.txt"
+
     :param fight_obj: Fight object to be written
     '''
     with open("fights.txt", "a") as file:
@@ -153,6 +154,12 @@ def delete_inventory(player_name):
                 file.write(line)
 
 def get_inventory(player_name):
+    '''
+    Fetches the inventory of a certain player
+
+    :param player_name: Player name
+    :return: Inventory instance
+    '''
     with open("inventory.txt", "r") as file:
         lines = file.readlines()
         for line in lines:
@@ -189,6 +196,14 @@ def create_masteries(player_obj):
         file.write(json.dumps(masteries_dict) + '\n')
 
 def update_masteries(player_obj, weapon, exp):
+    '''
+    Updates player masteries in "masteries.txt"
+
+    :param player_obj: Player to update
+    :param weapon: Weapon mastery to update
+    :param exp: Exp received
+    :return: Masteries info string
+    '''
     with open("masteries.txt", "r") as file:
         lines = file.readlines()
     with open("masteries.txt", "w") as file:
@@ -215,6 +230,12 @@ def update_masteries(player_obj, weapon, exp):
                 return info_txt
 
 def get_masteries(player_obj):
+    '''
+    Gets a player masteries from "masteries.txt"
+
+    :param player_obj: Player to get masteries from
+    :return: Masteries in dict format
+    '''
     with open("masteries.txt", "r") as file:
         for line in file:
             res = json.loads(line)
@@ -222,6 +243,11 @@ def get_masteries(player_obj):
                 return res
 
 def get_all_players():
+    '''
+    Gets all players from "players.txt"
+
+    :return: All players string info
+    '''
     players_string = ''
     with open("players.txt", "r") as file:
         for line in file:

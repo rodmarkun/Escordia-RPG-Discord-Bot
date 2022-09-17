@@ -14,11 +14,15 @@ gathering_equipment = ['Pickaxe', 'Axe']
 
 class Player(combat.Battler):
     '''
-    Player class which will hold all the info across the game. Will be stored in "players.txt" and the inventory
-    will be stored in "inventory.txt"
+    Player class which will hold all the info across the game.
     '''
 
     def __init__(self, name) -> None:
+        '''
+        Creates a new player.
+
+        :param name: Player's name.
+        '''
         stats = {'maxHp': 25,
                  'hp': 25,
                  'maxMp': 10,
@@ -129,6 +133,11 @@ class Player(combat.Battler):
                f'You currently have {self.aptitudePoints} aptitude points.'
 
     def show_spells(self):
+        '''
+        Returns a string with all spells known by the player
+
+        :return: Spells string
+        '''
         spell_str = ""
         i = 1
         for spell in self.spells:
@@ -137,6 +146,11 @@ class Player(combat.Battler):
         return spell_str
 
     def show_combos(self):
+        '''
+        Returns a string with all combos known by the player
+
+        :return: Combos string
+        '''
         combo_str = ""
         i = 1
         for combo in self.combos:
@@ -145,6 +159,11 @@ class Player(combat.Battler):
         return combo_str
 
     def show_masteries(self):
+        '''
+        Shows player's materies
+
+        :return: Masteries string
+        '''
         masteries_dict = file_management.get_masteries(self)
         info_txt = ""
         for mastery in masteries_dict["masteries"]:
@@ -155,8 +174,9 @@ class Player(combat.Battler):
     def normal_attack(self, defender):
         '''
         Performs a normal attack, same as Battler's but adding a Combo Point.
+
         :param defender:
-        :return:
+        :return: Attack info string
         '''
         #self.addComboPoints(1)
         return super().normal_attack(defender)
@@ -166,9 +186,7 @@ class Player(combat.Battler):
         '''
         Player equips certain item. Must be of type 'Equipment'.
     
-        Parameters:
-        equipment : Equipment
-            Item to equip.
+        :param equipment: Equipment to be equipped
         '''
         info = ''
         if type(equipment) == inventory.Equipment:
@@ -208,15 +226,13 @@ class Player(combat.Battler):
         Uses a certain item. Item must be in the "usable_items" list
         to be used.
 
-        Parameters:
-        item : Item
-            Item to be used.
+        :param item: Item to be used
         '''
         usable_items = [inventory.Potion, inventory.Grimoire]
         info = 'That item is not usable.'
         if type(item) in usable_items:
             info = item.activate(self)
-        self.inventory.decrease_item_amount(item, 1)
+            self.inventory.decrease_item_amount(item, 1)
         return info
 
     def add_exp(self, exp):
@@ -224,9 +240,7 @@ class Player(combat.Battler):
         Adds a certain amount of exp to the player and also handles leveling up.
         When leveling up, player also recovers hp/mp fully and has a +1 to all stats.
 
-        Parameters:
-        exp : int
-            Amount of exp points to add.
+        :param exp: Exp points to be added to player's exp
         '''
         lvl_up_str = ""
         self.xp += exp
@@ -251,9 +265,7 @@ class Player(combat.Battler):
         '''
         Adds a certain amount of money to the player.
 
-        Parameters:
-        money : int
-            Amount of money to be added.
+        :param money: Money to be added
         '''
         self.money += money
 
@@ -261,11 +273,8 @@ class Player(combat.Battler):
         '''
         Assigns the corresponding stat points when upgrading aptitudes.
 
-        Parameters:
-        aptitude : str
-            Aptitude to be upgraded.
-        points : int
-            Points used to upgrade
+        :param aptitude: Aptitude to be updated
+        :param points: Points spent to level up aptitude
         '''
         if aptitude == 'str':
             self.stats['atk'] += 2 * points
@@ -286,13 +295,26 @@ class Player(combat.Battler):
         '''
         Adds a certain amount of combo points.
 
-        Parameters:
-        points : int
-            Amount of points to be added.
+        :param points: Combo points to be added
         '''
         self.comboPoints += points
 
+    def death(self):
+        '''
+        Performs all actions needed when a player dies
+        '''
+        self.inDungeon = False
+        file_management.delete_dungeon(self.name)
+        self.money = round(self.money / 2)
+        combat.fully_heal(self)
+        combat.fully_recover_mp(self)
+
     def toJSON(self):
+        '''
+        Converts a player instance to a JSON string
+
+        :return: Player JSON
+        '''
         player_data = { "name" : self.name,
                         "stats" : self.stats,
                         "lvl" : self.lvl,
@@ -315,6 +337,12 @@ class Player(combat.Battler):
         return json.dumps(player_data, default=lambda o: o.__dict__, sort_keys=True)
 
 def createPlayer(player_json):
+    '''
+    Converts a player JSON into a player instance
+
+    :param player_json: Player KSON
+    :return: Player instance
+    '''
     player = Player(player_json['name'])
     player.stats = player_json['stats']
     player.lvl = player_json['lvl']
@@ -337,6 +365,7 @@ def createPlayer(player_json):
     player.inventory = file_management.get_inventory(player.name)
     return player
 
+# Deprecated
 class PlayerEncoder(json.JSONEncoder):
     def default(self, obj):
         return [obj.name, obj.stats, obj.lvl, obj.xp, obj.xpToNextLvl, obj.comboPoints, obj.aptitudes, obj.aptitudePoints, obj.equipment, obj.money, obj.combos, obj.spells, obj.activeQuests, obj.completedQuests, obj.isAlly]

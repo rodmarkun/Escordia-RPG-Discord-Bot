@@ -2,29 +2,25 @@ from random import randint
 import combat
 import items
 
-'''
-Enemy class definitions, specially for custom stats and rewards.
-'''
 
 class Enemy(combat.Battler):
     '''
     Base class for all enemies. Inherits class 'Battler'.
-
-    Attributes:
-    xpReward : int    
-        Amount of xp (Experience Points) given when slain
-    goldReward : int 
-        Amount of gold (coins/money) given when slain
-    possibleLoot : Item
-        Item(s) the enemy can drop when defeated
-    lootChance : int
-        Chance to get the loot
-    imageUrl : String
-        URL of enemy's image
-    isBoss : Bool
-        Whether the enemy is a boss or not
+    When creating an enemy, remember to add self.magicAttack = True if you want it to perform magic attacks
     '''
     def __init__(self, name, stats, xpReward, goldReward, possibleLoot=items.no_loot, lootChance=-1, imageUrl='', isBoss=False) -> None:
+        '''
+        Creates a new enemy.
+
+        :param name: Enemy name
+        :param stats: Enemy stats (same as player's)
+        :param xpReward: XP player receives when killing this enemy
+        :param goldReward: Gold/money player receives when killing this enemy
+        :param possibleLoot: Item this enemy can drop
+        :param lootChance: Chance of dropping item
+        :param imageUrl: URL of enemy's image
+        :param isBoss: True if enemy is a boss, False if it is not
+        '''
         super().__init__(name, stats)
         self.xpReward = xpReward
         self.goldReward = goldReward
@@ -35,13 +31,22 @@ class Enemy(combat.Battler):
         self.isBoss = isBoss
 
 def createEnemy(enemy_json):
+    '''
+    Creates an enemy instance from a JSON
+
+    :param enemy_json: Enemy JSON
+    :return: Enemy instance
+    '''
     enemy = Enemy(enemy_json['name'], enemy_json['stats'], enemy_json['xpReward'], enemy_json['goldReward'], enemy_json['possibleLoot'], enemy_json['lootChance'], enemy_json['imageUrl'], enemy_json['isBoss'])
     enemy.magicAttack = enemy_json['magicAttack']
     return enemy
 
+'''
+///////////////////////////////// Enemy Classes (You can add your own!) ////////////////////////////////////
+'''
+
 # AREA 1:
 
-    # Enemies
 class Bat(Enemy):
     def __init__(self) -> None:
         stats = {'maxHp': 15,
@@ -211,7 +216,6 @@ class GoblinElite(Enemy):
 
 # AREA 2:
 
-    # Area 2 Enemies:
 class RogueSwordsman(Enemy):
     def __init__(self):
         stats = {'maxHp': 50,
@@ -478,12 +482,122 @@ class BlackAntQueen(Enemy):
                          imageUrl="https://i.postimg.cc/sfckvgcq/Boss-Black-Ant-Queen.png")
         self.isBoss = True
 
+# AREA 3:
+
+class ColossalHydra(Enemy):
+    def __init__(self):
+        stats = {'maxHp': 102,
+                 'hp': 102,
+                 'maxMp': 10,
+                 'mp': 10,
+                 'atk': 15,
+                 'def': 12,
+                 'matk': 1,
+                 'mdef': 10,
+                 'speed': 12,
+                 'critCh': 1
+                 }
+        super().__init__('Colossal Hydra', stats, xpReward=100, goldReward=randint(15, 55), possibleLoot=items.no_loot, lootChance=-1,
+                         imageUrl="https://i.postimg.cc/y8z47v6P/Colossal-Hydra-3.png")
+
+class WildWyvern(Enemy):
+    def __init__(self):
+        stats = {'maxHp': 82,
+                 'hp': 82,
+                 'maxMp': 10,
+                 'mp': 10,
+                 'atk': 18,
+                 'def': 14,
+                 'matk': 1,
+                 'mdef': 10,
+                 'speed': 20,
+                 'critCh': 10
+                 }
+        super().__init__('Wild Wyvern', stats, xpReward=100, goldReward=randint(15, 55), possibleLoot=items.no_loot, lootChance=-1,
+                         imageUrl="https://i.postimg.cc/RZPkw9QP/Dragon-Wyvern-Red.png")
+
+class ElfArcher(Enemy):
+    def __init__(self):
+        stats = {'maxHp': 75,
+                 'hp': 75,
+                 'maxMp': 10,
+                 'mp': 10,
+                 'atk': 16,
+                 'def': 14,
+                 'matk': 1,
+                 'mdef': 10,
+                 'speed': 10,
+                 'critCh': 25
+                 }
+        super().__init__('Elf Archer', stats, xpReward=100, goldReward=randint(15, 55), possibleLoot=items.no_loot, lootChance=-1,
+                         imageUrl="https://i.postimg.cc/LsLV23Xz/Elf-Archer.png")
+
+class ElfKnight(Enemy):
+    def __init__(self):
+        stats = {'maxHp': 85,
+                 'hp': 85,
+                 'maxMp': 10,
+                 'mp': 10,
+                 'atk': 17,
+                 'def': 15,
+                 'matk': 1,
+                 'mdef': 10,
+                 'speed': 10,
+                 'critCh': 7
+                 }
+        super().__init__('Elf Knight', stats, xpReward=100, goldReward=randint(15, 55), possibleLoot=items.no_loot, lootChance=-1,
+                         imageUrl="https://i.postimg.cc/Mp8Tg7Ck/Elf-Knight-Dual.png")
+
+class LunarButterfly(Enemy):
+    def __init__(self):
+        stats = {'maxHp': 75,
+                 'hp': 75,
+                 'maxMp': 10,
+                 'mp': 10,
+                 'atk': 10,
+                 'def': 16,
+                 'matk': 18,
+                 'mdef': 10,
+                 'speed': 25,
+                 'critCh': 7
+                 }
+        super().__init__('Lunar Butterfly', stats, xpReward=100, goldReward=randint(15, 55), possibleLoot=items.no_loot, lootChance=-1,
+                         imageUrl="https://i.postimg.cc/XJZBnVxt/Insects-Lunar-Butterfly.png")
+        self.magicAttack = True
+
+# Area 3 Boss:
+
+class SacredLakeGuardianLeviathan(Enemy):
+    def __init__(self):
+        stats = {'maxHp': 407,
+                 'hp': 407,
+                 'maxMp': 10,
+                 'mp': 10,
+                 'atk': 25,
+                 'def': 14,
+                 'matk': 1,
+                 'mdef': 14,
+                 'speed': 22,
+                 'critCh': 10
+                 }
+        super().__init__('Sacred Lake Guardian, Leviathan', stats, xpReward=705, goldReward=357,
+                         imageUrl="https://i.postimg.cc/Jzn1fpp2/Boss-Sea-Dragon-Leviathan.png")
+        self.isBoss = True
+
+'''
+///////////////////////////////// Enemy Lists Definition ////////////////////////////////////
+'''
+
 area_1_enemies = [Wolf, Bat, LionAnt, ColossalCaterpillar, GiantDragonfly]
 area_1_boss = Daidarabotchi
 
 area_2_enemies = [RogueSwordsman, RogueMonk, RogueAssassin, EarthWorm, MountainHarpy]
 area_2_boss = RogueMasterGarland
 
+area_3_enemies = [ColossalHydra, WildWyvern, ElfArcher, ElfKnight, LunarButterfly]
+area_3_boss = SacredLakeGuardianLeviathan
+
 dungeon_1_enemies = [GoblinRaider, GoblinArcher, GoblinMage]
+
 dungeon_2_enemies = [SkeletonHero, SkeletonGuard, SkeletonKnight, SkeletonMage]
 dungeon_3_enemies = [BlackAntKnight, BlackAntBerserker, BlackAntArcher, BlackAntProtector]

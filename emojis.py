@@ -1,3 +1,7 @@
+'''
+///////////////////////////////// Basic Emojis ////////////////////////////////////
+'''
+
 ATTACK_EMOJI = '\U0001F170'
 SPELLS_EMOJI = '\U0001F1F8'
 COMBOS_EMOJI = '\U0001F1E8'
@@ -11,7 +15,10 @@ SKULL_EMOJI = '\U0001F480'
 CHECK_EMOJI = '\U00002705'
 CROSS_EMOJI = '\U0000274C'
 
-# Escordia Icons
+'''
+///////////////////////////////// Escordia Original Icons/Emojis ////////////////////////////////////
+'''
+
 ESC_HELMET_ICON = "<:HelmetIcon:1011284502020112394>"
 ESC_ARMOR_ICON = "<:ArmorIcon:1011284499314786388>"
 ESC_WEAPON_ICON = "<:WeaponIcon:1011284505451057152>"
@@ -36,5 +43,8 @@ ESC_AXE_ICON = "<:AxeIcon:1012287525844426792>"
 ESC_BOW_ICON = "<:BowIcon:1012287528449089556>"
 ESC_STAFF_ICON = "<:StaffIcon:1012287532211372032>"
 
+'''
+///////////////////////////////// Emoji/Icon Assignment ////////////////////////////////////
+'''
 obj_to_emoji = {'Helmet' : ESC_HELMET_ICON , 'Armor' : ESC_ARMOR_ICON, 'Weapon' : ESC_WEAPON_ICON, 'Accessory' : ESC_ACCESORY_ICON, 'Potion' : ESC_POTION_ICON, 'Grimoire' : ESC_GRIMOIRE_ICON, 'Material' : ESC_MATERIAL_ICON, 'Ore' : ESC_ORE_ICON, 'Wood' : ESC_WOOD_ICON, 'Pickaxe' : ESC_PICKAXE_ICON, 'Axe' : ESC_GATH_AXE_ICON}
 weapon_to_emoji = {'Swords' : ESC_SWORD_ICON, 'Axes & Hammers' : ESC_AXE_ICON, 'Daggers' : ESC_DAGGER_ICON, 'Bows' : ESC_BOW_ICON, 'Staffs & Scythes' : ESC_STAFF_ICON}

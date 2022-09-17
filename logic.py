@@ -15,6 +15,13 @@ import crafting as crafting_module
 from StringProgressBar import progressBar
 
 async def begin_fight(ctx, player, enemy):
+    '''
+    Begins a fight between a player and an enemy
+
+    :param ctx: Discord CTX
+    :param player: Player object
+    :param enemy: Enemy object
+    '''
     in_fight = file_management.check_if_in_fight(ctx.author.name)
     if in_fight is not None:
         await ctx.send(f'You are already in a fight against **{in_fight.enemy.name}**, {ctx.author.mention}')
@@ -29,6 +36,13 @@ async def begin_fight(ctx, player, enemy):
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
 
 async def travel_area(player_obj, ctx, area):
+    '''
+    Travels to a certain area if unlocked
+
+    :param player_obj: Player object
+    :param ctx: Discord CTX
+    :param area: Area number player wants to travel to
+    '''
     if not player_obj.inDungeon:
         if player_obj.defeatedBosses + 1 >= area:
             if player_obj.currentArea != area:
@@ -44,6 +58,14 @@ async def travel_area(player_obj, ctx, area):
         await ctx.send(f'{ctx.author.mention} you cannot travel while you are in a dungeon.')
 
 async def level_up_aptitudes(player_obj, ctx, apt, apt_points):
+    '''
+    Levels up an aptitude by X points
+
+    :param player_obj: Player object
+    :param ctx: Discord CTX
+    :param apt: Aptitude to upgrade
+    :param apt_points: Points invested into leveling aptitude
+    '''
     if player_obj.aptitudePoints < int(apt_points):
         await ctx.send(f'{ctx.author.mention}, you do not have that many aptitude points.')
         return
@@ -56,12 +78,24 @@ async def level_up_aptitudes(player_obj, ctx, apt, apt_points):
             f'{ctx.author.mention} you have succesfully upgraded your {apt.lower()} to {player_obj.aptitudes[apt.lower()]}')
 
 async def player_normal_attack(fight, ctx):
+    '''
+    Player performs a normal attack
+
+    :param fight: Fight object
+    :param ctx: Discord CTX
+    '''
     fight.player = file_management.check_if_exists(ctx.author.name)
     fight.player.addComboPoints(1)
     fight_text = fight.normal_attack()
     await ctx.send(fight_text)
 
 async def finish_turn(fight, ctx):
+    '''
+    Finishes actual turn
+
+    :param fight: Fight object
+    :param ctx: Discord CTX
+    '''
     if fight.player.alive:
         if not fight.enemy.alive:
             await win_fight(ctx, fight)
@@ -82,10 +116,18 @@ async def finish_turn(fight, ctx):
         await ctx.send(embed=embed)
 
 async def dungeon_logic(player_obj, curr_area, arg, ctx):
+    '''
+    Controls logic to enter a dungeon or advancing inside one
+
+    :param player_obj: Player object
+    :param curr_area: Player's current area
+    :param arg: Area number or 'next' if player is advancing in the dungeon
+    :param ctx: Discord CTX
+    '''
     if not player_obj.inDungeon:
         try:
             area_dungeon = curr_area.dungeons[int(arg) - 1]
-            dungeon_obj = dungeons_module.Dungeon(area_dungeon.name, area_dungeon.enemies, area_dungeon.loot_pool,
+            dungeon_obj = dungeons_module.Dungeon(area_dungeon.name, area_dungeon.enemy_list, area_dungeon.loot_pool,
                                                   area_dungeon.boss, area_dungeon.min_enemy_rooms,
                                                   area_dungeon.min_loot_rooms, area_dungeon.max_enemy_rooms,
                                                   area_dungeon.max_loot_rooms, player_obj.name,
@@ -106,6 +148,13 @@ async def dungeon_logic(player_obj, curr_area, arg, ctx):
 
 
 async def dungeon_room(ctx, dungeon_obj, player_obj):
+    '''
+    Creates a new dungeon room
+
+    :param ctx: Discord CTX
+    :param dungeon_obj: Dungeon object
+    :param player_obj: Player object
+    '''
     room_choice = ["Loot", "Enemy"]
     curr_room = random.choice(room_choice)
 
@@ -126,7 +175,7 @@ async def dungeon_room(ctx, dungeon_obj, player_obj):
         file_management.write_dungeon(dungeon_obj)
     elif (curr_room == "Enemy" or curr_room == "Loot" and dungeon_obj.loot_rooms == 0) and dungeon_obj.enemy_rooms > 0:
         dungeon_obj.enemy_rooms -= 1
-        enemy = random.choice(dungeon_obj.enemies)()
+        enemy = random.choice(dungeon_obj.enemy_list)()
         await begin_fight(ctx, player_obj, enemy)
         file_management.update_player(player_obj)
         file_management.delete_dungeon(ctx.author.name)
@@ -139,6 +188,12 @@ async def dungeon_room(ctx, dungeon_obj, player_obj):
 
 
 async def win_fight(ctx, in_fight):
+    '''
+    Player wins a fight.
+
+    :param ctx: Discord CTX
+    :param in_fight: Fight object
+    '''
     lvl_up = in_fight.player.add_exp(in_fight.enemy.xpReward)
     in_fight.player.add_money(in_fight.enemy.goldReward)
 
@@ -165,6 +220,13 @@ async def win_fight(ctx, in_fight):
         await ctx.send(f'{ctx.author.mention} - {lvl_up}')
 
 async def gather_resources(ctx, player_obj, action):
+    '''
+    Player gathers resources
+
+    :param ctx: Discord CTX
+    :param player_obj: Player object
+    :param action: Gathering method (string)
+    '''
     gathering_nodes = items.gathering_nodes
     tier = 1
     if action == "mining":
@@ -186,6 +248,13 @@ async def gather_resources(ctx, player_obj, action):
     await ctx.send(embed=embed)
 
 async def craft_item(ctx, object_name, player_obj):
+    '''
+    Crafts a certain item
+
+    :param ctx: Discord CTX
+    :param object_name: Object name, lowercased and spaces replaced with underscores (ex: bronze_armor)
+    :param player_obj: Player object
+    '''
     recipes = crafting_module.all_recipes
     for recipe_tier in recipes:
         for recipe in recipe_tier:
@@ -210,6 +279,13 @@ async def craft_item(ctx, object_name, player_obj):
 # Embeds
 
 def embed_fight_msg(ctx, enemy, player_obj):
+    '''
+    Sends embed used while fighting
+
+    :param ctx: Discord CTX
+    :param enemy: Enemy object
+    :param player_obj: Player object
+    '''
     hp_bar = progressBar.filledBar(enemy.stats['maxHp'], enemy.stats['hp'], size=10)
     player_hp_bar = progressBar.filledBar(player_obj.stats['maxHp'], player_obj.stats['hp'], size=10)
     player_mp_bar = progressBar.filledBar(player_obj.stats['maxMp'], player_obj.stats['mp'], size=10)
@@ -230,6 +306,12 @@ def embed_fight_msg(ctx, enemy, player_obj):
     return embed
 
 async def send_area_embed(player_obj, ctx):
+    '''
+    Send an embed of all areas
+
+    :param player_obj: Player object
+    :param ctx: Discord CTX
+    '''
     current_area = area_module.areas[player_obj.currentArea - 1]
     areas_txt = area_module.show_areas()
     areas_txt += f'\nYou are currently in **{current_area.name}** (area {current_area.number})\n'
@@ -242,6 +324,13 @@ async def send_area_embed(player_obj, ctx):
     await ctx.send(embed=embed)
 
 async def send_player_profile(player_json, ctx, search):
+    '''
+    Sends profile embed of a certain player
+
+    :param player_json: Player in JSON format
+    :param ctx: Discord CTX
+    :param search: Player name
+    '''
     player_obj = player_module.createPlayer(player_json)
     embed = discord.Embed(
         title=f'Profile - {player_obj.name}',
@@ -253,6 +342,12 @@ async def send_player_profile(player_json, ctx, search):
     await ctx.send(embed=embed)
 
 async def send_aptitudes_embed(player_obj, ctx):
+    '''
+    Sends an embed with aptitude info from one player
+
+    :param player_obj: Player object
+    :param ctx: Discord CTX
+    '''
     embed = discord.Embed(
         title=f'{player_obj.name}\'s Aptitudes',
         description=player_obj.show_aptitudes(),
@@ -262,6 +357,13 @@ async def send_aptitudes_embed(player_obj, ctx):
     await ctx.send(embed=embed)
 
 async def show_current_dungeons(curr_area, player_obj, ctx):
+    '''
+    Shows dungeon in current area
+
+    :param curr_area: Area where the player is currently located
+    :param player_obj: Player object
+    :param ctx: Discord CTX
+    '''
     dungeons_txt = ''
     i = 1
     for dungeon_in_area in curr_area.dungeons:
@@ -276,6 +378,16 @@ async def show_current_dungeons(curr_area, player_obj, ctx):
     await ctx.send(embed=embed)
 
 def embed_victory_msg(ctx, enemy, player_obj, xp, gold, looted):
+    '''
+    Sends an embed when victorious in combat
+
+    :param ctx: Discord CTX
+    :param enemy: Enemy object
+    :param player_obj: Player object
+    :param xp: XP obtained
+    :param gold: Gold obtained
+    :param looted: Whether the player get to loot the enemy or not
+    '''
     looted_str = ''
     if looted:
         looted_str = f'\nYou loot **{enemy.possibleLoot["name"]}**.'
@@ -289,6 +401,12 @@ def embed_victory_msg(ctx, enemy, player_obj, xp, gold, looted):
     return embed
 
 async def show_player_crafting_tiers(player_obj, ctx):
+    '''
+    Shows crafting tiers locked and unlocked by a player
+
+    :param player_obj: Player object
+    :param ctx: Discord CTX
+    '''
     tiers_txt = "These are your unlocked crafting tiers. Use `!craft [tier]` to see all recipes from that tier. " \
                 "For example: `!craft tier1` (Recipes from Tier 1).\n\n"
     i = 1
@@ -306,6 +424,13 @@ async def show_player_crafting_tiers(player_obj, ctx):
     await ctx.send(embed=embed)
 
 async def show_player_crafts(player_obj, tier, ctx):
+    '''
+    Shows crafts from a certain tier
+
+    :param player_obj: Player object
+    :param tier: Tier to see recipes from
+    :param ctx: Discord CTX
+    '''
     embed = discord.Embed(
         title=f'Crafting - Tier {tier}',
         description=crafting_module.show_crafting_recipes(tier, player_obj),
@@ -314,6 +439,12 @@ async def show_player_crafts(player_obj, tier, ctx):
     await ctx.send(embed=embed)
 
 async def show_player_spells(player_obj, ctx):
+    '''
+    Sends an embed with all the spells a player knows
+
+    :param player_obj: Player object
+    :param ctx: Discord CTX
+    '''
     embed = discord.Embed(
         title=f'{player_obj.name}\'s spells',
         description=player_obj.show_spells(),
@@ -322,6 +453,12 @@ async def show_player_spells(player_obj, ctx):
     await ctx.send(embed=embed)
 
 async def show_player_combos(player_obj, ctx):
+    '''
+    Sends an embed with all the combos a player knows
+
+    :param player_obj: Player object
+    :param ctx: Discord CTX
+    '''
     embed = discord.Embed(
         title=f'{player_obj.name}\'s combos',
         description=player_obj.show_combos(),
@@ -330,6 +467,12 @@ async def show_player_combos(player_obj, ctx):
     await ctx.send(embed=embed)
 
 async def show_player_masteries(player_obj, ctx):
+    '''
+    Shows a player's masteries
+
+    :param player_obj: Player object
+    :param ctx: Discord CTX
+    '''
     embed = discord.Embed(
         title=f'{player_obj.name}\'s masteries',
         description=player_obj.show_masteries(),

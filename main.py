@@ -6,8 +6,10 @@
 
 # Imports
 import asyncio
+import datetime
 import os
 import json
+import subprocess
 
 import file_management
 import shop as shop_module
@@ -16,6 +18,7 @@ import text as text_module
 
 from logic import *
 from discord.ext import commands
+
 
 # Discord token from VENV
 DISCORD_TOKEN = os.environ.get('DISCORD_TOKEN')
@@ -26,7 +29,6 @@ activity = discord.Activity(type=discord.ActivityType.watching, name="!help")
 bot = commands.Bot(command_prefix='!', intents=intents, activity=activity)
 bot.remove_command('help')
 shop_obj = shop_module.Shop()
-
 
 @bot.command()
 async def help(ctx):
@@ -74,6 +76,7 @@ async def area(ctx, arg=0):
     '''
     !area command
     Shows all areas or travels to a certain area
+
     :param arg: Area to travel to. If 0, just shows all areas
     '''
     player_obj = file_management.check_if_exists(ctx.author.name)
@@ -123,6 +126,7 @@ async def profile(ctx, arg=None):
     '''
     !profile command
     Shows profile of specified player
+
     :param arg: Player whose profile will be shown. If None, shows self profile
     '''
     with open("players.txt", "r") as file:
@@ -144,6 +148,7 @@ async def equip(ctx, arg=None):
     '''
     !equip command
     Equips a certain item
+
     :param arg: Index of item to equip
     '''
     player_obj = file_management.check_if_exists(ctx.author.name)
@@ -169,6 +174,7 @@ async def use(ctx, arg=None):
     '''
     !use command
     Uses a certain item
+
     :param arg: Index of item to use
     '''
     player_obj = file_management.check_if_exists(ctx.author.name)
@@ -187,6 +193,12 @@ async def use(ctx, arg=None):
 
 @bot.command()
 async def craft(ctx, arg=None):
+    '''
+    !craft command
+    Crafts a certain item or shows all recipes from a certain tier
+
+    :param arg: Crafting tier to see recipes from or item to be crafted
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is None:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
@@ -209,6 +221,10 @@ async def craft(ctx, arg=None):
 @commands.cooldown(1, 60, commands.BucketType.user)
 @bot.command()
 async def chop(ctx):
+    '''
+    !chop command
+    If an axe is equipped, players can chop trees to gather wood
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is None:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
@@ -225,6 +241,10 @@ async def chop(ctx):
 @commands.cooldown(1, 60, commands.BucketType.user)
 @bot.command()
 async def mine(ctx):
+    '''
+    !mine command
+    If a pickaxe is equipped, players can mine to gather ores and materials
+    '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is None:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
@@ -243,6 +263,7 @@ async def aptitudes(ctx, apt=None, apt_points=None):
     '''
     !aptitudes command
     Shows current aptitudes or upgrades an aptitude by x points
+
     :param apt: Aptitude to level up. If none, just shows up all aptitudes
     :param apt_points: Number of aptitude points to spend
     '''
@@ -301,6 +322,7 @@ async def dungeon(ctx, arg=None):
     '''
     !dungeon command
     Shows all dungeons or enter a specific dungeon
+
     :param arg: Specifies index of dungeon to enter. If none, shows all dungeons in current area.
     '''
     player_obj = file_management.check_if_exists(ctx.author.name)
@@ -323,6 +345,7 @@ async def spells(ctx, arg=0):
     '''
     !spells command
     Shows all spells or casts a certain spell
+
     :param arg: Index of spell to cast. If 0, shows all spells.
     '''
     player_obj = file_management.check_if_exists(ctx.author.name)
@@ -348,6 +371,7 @@ async def combos(ctx, arg=0):
     '''
     !combos command
     Shows all combos or performs a certain combo
+
     :param arg: Index of combo to perform. If 0, shows all combo.
     '''
     player_obj = file_management.check_if_exists(ctx.author.name)
@@ -450,6 +474,7 @@ async def shop(ctx, arg=0, quant=1):
     '''
     !shop command
     Shows shop's items or buys a certain quantity of an item
+
     :param arg: Index of item to buy. If 0, shows all shop's items
     :param quant: Quantity to buy of specified item
     '''
@@ -488,6 +513,7 @@ async def sell(ctx, arg=0, amount=1):
     '''
     !sell command
     Sell a certain item from your inventory
+
     :param arg: Index of item to sell.
     :param quant: Quantity to sell of specified item
     '''
@@ -528,5 +554,10 @@ async def command_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         em = discord.Embed(title=f"Command in cooldown",description=f"Try again in {error.retry_after:.2f}s.")
         await ctx.send(embed=em)
+
+@bot.event
+async def on_ready():
+    channel = bot.get_channel(1004789835522908293)
+    await channel.send("Escordia RPG is now **online**!")
 
 bot.run(DISCORD_TOKEN)
