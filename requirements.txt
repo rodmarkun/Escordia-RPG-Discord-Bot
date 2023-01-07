@@ -1,2 +1,0 @@
-StringProgressBar~=1.1.1
-discord~=1.7.3
