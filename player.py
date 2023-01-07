@@ -60,7 +60,7 @@ class Player(combat.Battler):
                                  'choppingTier' : 0}
         self.money = 20  # Current money
         self.combos = []  # Player's selection of combos (atk, cp)
-        self.spells = []  # Player's selection of spells (matk, mp)
+        self.spells = [skills.spellFireball, skills.spellSmallBlessing]  # Player's selection of spells (matk, mp)
 
         self.currentArea = 1
         self.defeatedBosses = 0

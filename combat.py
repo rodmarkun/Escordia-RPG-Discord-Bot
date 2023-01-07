@@ -112,6 +112,7 @@ class Battler:
             fully_heal(self)
         else:
             self.stats['hp'] += amount
+        return f"Healed for {amount} HP!\n"
 
 def check_miss(attacker, defender):
     '''

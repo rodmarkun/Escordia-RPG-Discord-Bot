@@ -11,7 +11,7 @@ class Fight:
     Stores information of an ongoing fight.
     '''
 
-    def __init__(self, player, enemy, fight_msg):
+    def __init__(self, player, enemy):
         '''
         Creates a new fight
 
@@ -21,7 +21,6 @@ class Fight:
         '''
         self.player = player
         self.enemy = enemy
-        self.fight_msg = fight_msg
 
     def normal_attack(self):
         '''
@@ -76,5 +75,5 @@ def createFight(fight_json):
     :param fight_json: Fight JSON
     :return: Fight instance
     '''
-    fight = Fight(player=player_module.createPlayer(fight_json['player']), enemy=enemies_module.createEnemy(fight_json['enemy']), fight_msg=fight_json['fight_msg'])
+    fight = Fight(player=player_module.createPlayer(fight_json['player']), enemy=enemies_module.createEnemy(fight_json['enemy']))
     return fight

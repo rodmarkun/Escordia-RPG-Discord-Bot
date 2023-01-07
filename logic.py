@@ -1,18 +1,142 @@
 import discord
 
+import area
 import emojis
 import file_management
 import random
 import combat as combat_module
 import items
+import messages
+import skills as skills_module
 import player as player_module
 import dungeons as dungeons_module
 import fight as fight_module
 import emojis as emojis_module
 import area as area_module
 import crafting as crafting_module
-
 from StringProgressBar import progressBar
+
+'''
+Menus & Interface
+'''
+
+class Menu(discord.ui.View):
+    def __init__(self, ctx):
+        super().__init__()
+        self.value = None
+        self.ctx = ctx
+        self.in_fight = file_management.check_if_in_fight(self.ctx.author.name)
+
+    @discord.ui.button(label="Attack", style=discord.ButtonStyle.red)
+    async def menu1(self, interaction: discord.Interaction, button: discord.ui.Button):
+        '''
+        in_fight = file_management.check_if_in_fight(self.ctx.author.name)
+        if in_fight is None:
+            await self.ctx.send(f'You are not currently in a fight, {self.ctx.author.mention}')
+        else:
+        '''
+        await player_normal_attack(self.in_fight, self.ctx, interaction)
+
+        file_management.update_player(self.in_fight.player)
+        file_management.delete_fight(self.ctx.author.name)
+
+        await finish_turn(self.in_fight, self.ctx)
+
+    @discord.ui.button(label="Skill", style=discord.ButtonStyle.primary)
+    async def menu2(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.ctx.send("Skills", view=SelectView(self.in_fight.player.spells, 'skills', self.ctx))
+        await interaction.response.defer()
+
+    @discord.ui.button(label="Item", style=discord.ButtonStyle.green)
+    async def menu3(self, interaction: discord.Interaction, button: discord.ui.Button):
+        print("Item!")
+
+class SkillSelect(discord.ui.Select):
+    def __init__(self, skills : [skills_module.Skill], ctx):
+        options = [discord.SelectOption(label=i["name"]) for i in skills]
+        super().__init__(placeholder="Choose a skill: ", max_values=1, min_values=1, options=options)
+        self.ctx = ctx
+
+    async def callback(self, interaction: discord.Interaction):
+        fight_obj = file_management.check_if_in_fight(self.ctx.author.name)
+        if fight_obj is not None:
+            selected_spell = [x for x in fight_obj.player.spells if x['name'] == self.values[0]]
+            spell = skills_module.createSpell(selected_spell[0])
+            info_str = fight_obj.skill(spell)
+            file_management.delete_fight(self.ctx.author.name)
+
+            await interaction.response.send_message(info_str)
+            await finish_turn(fight_obj, self.ctx)
+        else:
+            await messages.not_in_fight(self.ctx)
+
+class AreaSelect(discord.ui.Select):
+    def __init__(self, area_list, ctx):
+        options = [discord.SelectOption(label=f"Area {idx+1}") for idx, area in enumerate(area_list)]
+        super().__init__(placeholder="Choose an area: ", max_values=1, min_values=1, options=options)
+        self.ctx = ctx
+
+    async def callback(self, interaction: discord.Interaction):
+        player_obj = file_management.check_if_exists(self.ctx.author.name)
+        await travel_area(player_obj, self.ctx, int(self.values[0].split(' ')[1]), interaction)
+
+class SelectView(discord.ui.View):
+    def __init__(self, list, type_select, ctx, *, timeout=30):
+        super().__init__(timeout=timeout)
+        if type_select == 'skills':
+            self.add_item(SkillSelect(list, ctx))
+        elif type_select == 'areas':
+            self.add_item(AreaSelect(list, ctx))
+
+'''
+Areas
+'''
+
+async def show_areas(ctx):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    if player_obj is None:
+        await messages.on_character_not_created(ctx)
+    else:
+        await send_area_embed(player_obj, ctx)
+
+async def travel_area(player_obj, ctx, area, interaction):
+    '''
+    Travels to a certain area if unlocked
+
+    :param player_obj: Player object
+    :param ctx: Discord CTX
+    :param area: Area number player wants to travel to
+    '''
+    if not player_obj.inDungeon:
+        if player_obj.defeatedBosses + 1 >= area:
+            if player_obj.currentArea != area:
+                player_obj.currentArea = area
+                file_management.delete_player(player_obj.name)
+                file_management.write_player(player_obj)
+                await interaction.response.send_message(f'{ctx.author.mention} you are now in area {area}')
+            else:
+                await interaction.response.send_message(f'{ctx.author.mention} you are already in area {area}')
+        else:
+            await interaction.response.send_message(f'{ctx.author.mention} you first need to defeat the `!boss` of al previous areas.')
+    else:
+        await interaction.response.send_message(f'{ctx.author.mention} you cannot travel while you are in a dungeon.')
+
+'''
+Player logic
+'''
+
+async def initialize_player(ctx):
+    player_obj = file_management.check_if_exists(ctx.author.name)
+    if player_obj is not None:
+        await messages.on_character_already_created(ctx)
+    else:
+        create_player = player_module.Player(ctx.author.name)
+        file_management.write_player(create_player)
+        await messages.on_character_creation(ctx)
+
+'''
+Fighting Logic
+'''
 
 async def begin_fight(ctx, player, enemy):
     '''
@@ -28,34 +152,26 @@ async def begin_fight(ctx, player, enemy):
         return
 
     if player is not None:
-        fight_msg = await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=enemy, player_obj=player))
-
-        fight_obj = fight_module.Fight(player=player, enemy=enemy, fight_msg=fight_msg.id)
+        fight_obj = fight_module.Fight(player=player, enemy=enemy)
         file_management.write_fight(fight_obj)
+        await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=enemy, player_obj=player), view=Menu(ctx))
     else:
-        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
+        await messages.on_character_not_created(ctx)
 
-async def travel_area(player_obj, ctx, area):
+async def player_normal_attack(fight, ctx, interaction):
     '''
-    Travels to a certain area if unlocked
+    Player performs a normal attack
 
-    :param player_obj: Player object
+    :param fight: Fight object
     :param ctx: Discord CTX
-    :param area: Area number player wants to travel to
     '''
-    if not player_obj.inDungeon:
-        if player_obj.defeatedBosses + 1 >= area:
-            if player_obj.currentArea != area:
-                player_obj.currentArea = area
-                file_management.delete_player(player_obj.name)
-                file_management.write_player(player_obj)
-                await ctx.send(f'{ctx.author.mention} you are now in area {area}')
-            else:
-                await ctx.send(f'{ctx.author.mention} you are already in area {area}')
-        else:
-            await ctx.send(f'{ctx.author.mention} you first need to defeat the `!boss` of al previous areas.')
+    fight.player = file_management.check_if_exists(ctx.author.name)
+    fight.player.addComboPoints(1)
+    fight_text = fight.normal_attack()
+    if interaction is None:
+        await ctx.send(fight_text)
     else:
-        await ctx.send(f'{ctx.author.mention} you cannot travel while you are in a dungeon.')
+        await interaction.response.send_message(fight_text)
 
 async def level_up_aptitudes(player_obj, ctx, apt, apt_points):
     '''
@@ -77,18 +193,6 @@ async def level_up_aptitudes(player_obj, ctx, apt, apt_points):
         await ctx.send(
             f'{ctx.author.mention} you have succesfully upgraded your {apt.lower()} to {player_obj.aptitudes[apt.lower()]}')
 
-async def player_normal_attack(fight, ctx):
-    '''
-    Player performs a normal attack
-
-    :param fight: Fight object
-    :param ctx: Discord CTX
-    '''
-    fight.player = file_management.check_if_exists(ctx.author.name)
-    fight.player.addComboPoints(1)
-    fight_text = fight.normal_attack()
-    await ctx.send(fight_text)
-
 async def finish_turn(fight, ctx):
     '''
     Finishes actual turn
@@ -102,7 +206,7 @@ async def finish_turn(fight, ctx):
         else:
             file_management.write_fight(fight)
             file_management.update_player(fight.player)
-            await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=fight.enemy, player_obj=fight.player))
+            await ctx.send(embed=embed_fight_msg(ctx=ctx, enemy=fight.enemy, player_obj=fight.player), view=Menu(ctx))
     else:
         embed = discord.Embed(
             title=f'{fight.player.name} - Death {emojis_module.SKULL_EMOJI}',
@@ -293,14 +397,11 @@ def embed_fight_msg(ctx, enemy, player_obj):
         title=f'Fight - {ctx.author}',
         description=f'You are fighting a **{enemy.name}**.\n'
                     f'HP: {hp_bar[0]} - {enemy.stats["hp"]}/{enemy.stats["maxHp"]}\n'
-                    f'What will you do?\n\n'
-                    f'{emojis_module.RED_CIRCLE_EMOJI} Attack - !attack\n'
-                    f'{emojis_module.RED_CIRCLE_EMOJI} Spells - !spells\n'
-                    f'{emojis_module.RED_CIRCLE_EMOJI} Combos - !combos',
+                    f'What will you do?\n\n',
         color=discord.Colour.red()
     )
     embed.set_thumbnail(url=enemy.imageUrl)
-    embed.set_image(url=ctx.author.avatar.url)
+    #embed.set_image(url=ctx.author.avatar.url)
     embed.set_footer(
         text=f'{player_obj.name}\nHP: {player_obj.stats["hp"]}/{player_obj.stats["maxHp"]} | {player_hp_bar[0]}\nMP: {player_obj.stats["mp"]}/{player_obj.stats["maxMp"]} | {player_mp_bar[0]}\nCombo Points: {player_obj.comboPoints}')
     return embed
@@ -321,7 +422,7 @@ async def send_area_embed(player_obj, ctx):
         color=discord.Colour.red()
     )
     embed.set_image(url="https://i.postimg.cc/nLTrXZZV/Map.png")
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, view=SelectView(area.areas, 'areas', ctx))
 
 async def send_player_profile(player_json, ctx, search):
     '''

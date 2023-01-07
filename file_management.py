@@ -134,8 +134,6 @@ def write_inventory(player_obj):
 
     :param player_obj: Player object which contains the Inventory object
     '''
-    print(player_obj.inventory)
-    print(player_obj.inventory.toJSON())
     with open("inventory.txt", "a") as file:
         file.write(player_obj.inventory.toJSON() + '\n')
 

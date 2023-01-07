@@ -6,17 +6,19 @@
 
 # Imports
 import asyncio
-import datetime
 import os
 import json
-import subprocess
-
-import file_management
 import shop as shop_module
 import skills as skills_module
-import text as text_module
+import emojis as emojis_module
+import discord
+import file_management
+import random
+import combat as combat_module
+import messages
+import area as area_module
 
-from logic import *
+import logic
 from discord.ext import commands
 
 
@@ -36,13 +38,7 @@ async def help(ctx):
     !help command
     Shows info of all commands
     '''
-    command_string = text_module.help_text
-    embed = discord.Embed(
-        title='Bot Commands',
-        description= command_string,
-        color=discord.Colour.red()
-    )
-    await ctx.send(embed=embed)
+    await messages.help_message(ctx)
 
 @bot.command()
 async def start(ctx):
@@ -50,13 +46,7 @@ async def start(ctx):
     !start command
     Creates a new character
     '''
-    player_obj = file_management.check_if_exists(ctx.author.name)
-    if player_obj is not None:
-        await ctx.send(f'You already have a character in the world of Escordia, {ctx.author.mention}.')
-    else:
-        create_player = player_module.Player(ctx.author.name)
-        file_management.write_player(create_player)
-        await ctx.send(f'Welcome, {ctx.author.mention}, to the world of Escordia. We recommend you to play the `!tutorial`.')
+    await logic.initialize_player(ctx)
 
 @bot.command()
 async def tutorial(ctx):
@@ -64,32 +54,16 @@ async def tutorial(ctx):
     !tutorial command
     Shows a small intro/tutorial
     '''
-    embed = discord.Embed(
-        title=f'Tutorial',
-        description=text_module.tutorial_1,
-        color=discord.Colour.red()
-    )
-    await ctx.send(embed=embed)
+    await messages.tutorial_message(ctx)
 
 @bot.command()
-async def area(ctx, arg=0):
+async def area(ctx):
     '''
     !area command
-    Shows all areas or travels to a certain area
+    Shows all areas and travels to a certain area
 
-    :param arg: Area to travel to. If 0, just shows all areas
     '''
-    player_obj = file_management.check_if_exists(ctx.author.name)
-    if player_obj is None:
-        await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
-    else:
-        try:
-            if arg == 0:
-                await send_area_embed(player_obj, ctx)
-            else:
-               await travel_area(player_obj, ctx, arg)
-        except:
-            await ctx.send(f'Something went wrong. Did you type the command correctly?')
+    await logic.show_areas(ctx)
 
 @bot.command()
 async def boss(ctx):
@@ -103,7 +77,7 @@ async def boss(ctx):
     else:
         if file_management.check_if_in_fight(player_obj.name) is None or not player_obj.inDungeon:
             current_area = area_module.areas[player_obj.currentArea - 1]
-            await begin_fight(ctx=ctx, player=player_obj, enemy=current_area.boss())
+            await logic.begin_fight(ctx=ctx, player=player_obj, enemy=current_area.boss())
         else:
             await ctx.send(f'{ctx.author.mention} you cannot fight a boss while already in a fight or in a dungeon.')
 
@@ -113,13 +87,7 @@ async def players(ctx):
     !players command
     Shows all players in Escordia RPG
     '''
-    embed = discord.Embed(
-        title=f'Players - {ctx.guild.name}',
-        description=file_management.get_all_players(),
-        color=discord.Colour.red()
-    )
-    embed.set_image(url=ctx.guild.icon.url)
-    await ctx.send(embed=embed)
+    await messages.players_message(ctx)
 
 @bot.command()
 async def profile(ctx, arg=None):
@@ -136,7 +104,7 @@ async def profile(ctx, arg=None):
             if arg is not None:
                 search = arg
             if res['name'] == search:
-                await send_player_profile(res, ctx, search)
+                await logic.send_player_profile(res, ctx, search)
                 return
     if arg is None:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
@@ -205,15 +173,15 @@ async def craft(ctx, arg=None):
     else:
         if file_management.check_if_in_fight(player_obj.name) is None:
             if arg is None:
-                await show_player_crafting_tiers(player_obj, ctx)
+                await logic.show_player_crafting_tiers(player_obj, ctx)
             elif arg[0:4] == "tier":
                 if player_obj.defeatedBosses + 1 >= int(arg[4]):
-                    await show_player_crafts(player_obj, int(arg[4]), ctx)
+                    await logic.show_player_crafts(player_obj, int(arg[4]), ctx)
                     await inventory(ctx)
                 else:
                     await ctx.send(f'You have not unlocked that tier of crafting yet, {ctx.author.mention}')
             else:
-                await craft_item(ctx, arg, player_obj)
+                await logic.craft_item(ctx, arg, player_obj)
                 await inventory(ctx)
         else:
             await ctx.send(f'You cannot craft while fighting, {ctx.author.mention}')
@@ -232,7 +200,7 @@ async def chop(ctx):
         in_fight = file_management.check_if_in_fight(ctx.author.name)
         if in_fight is None:
             if player_obj.gathering_tiers["choppingTier"] > 0:
-                await gather_resources(ctx, player_obj, "chopping")
+                await logic.gather_resources(ctx, player_obj, "chopping")
             else:
                 await ctx.send(f'You need an axe in order to chop wood, {ctx.author.mention}')
         else:
@@ -252,7 +220,7 @@ async def mine(ctx):
         in_fight = file_management.check_if_in_fight(ctx.author.name)
         if in_fight is None:
             if player_obj.gathering_tiers["miningTier"] > 0:
-                await gather_resources(ctx, player_obj, "mining")
+                await logic.gather_resources(ctx, player_obj, "mining")
             else:
                 await ctx.send(f'You need a pickaxe in order to mine, {ctx.author.mention}')
         else:
@@ -272,11 +240,11 @@ async def aptitudes(ctx, apt=None, apt_points=None):
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
     else:
         if apt is None:
-            await send_aptitudes_embed(player_obj, ctx)
+            await logic.send_aptitudes_embed(player_obj, ctx)
         elif apt is not None and apt_points is not None:
             if file_management.check_if_in_fight(ctx.author.name) is None:
                 try:
-                    await level_up_aptitudes(player_obj, ctx, apt, apt_points)
+                    await logic.level_up_aptitudes(player_obj, ctx, apt, apt_points)
                 except:
                     await ctx.send(f'Something went wrong. Are you sure you typed the aptitude correctly, {ctx.author.mention}?')
             else:
@@ -293,7 +261,7 @@ async def fight(ctx):
         if file_management.check_if_in_fight(ctx.author.name) is None and not player_obj.inDungeon:
             curr_area = area_module.areas[player_obj.currentArea - 1]
             enemy = random.choice(curr_area.enemyList)()
-            await begin_fight(ctx=ctx, player=player_obj, enemy=enemy)
+            await logic.begin_fight(ctx=ctx, player=player_obj, enemy=enemy)
         else:
             await ctx.send(f'{ctx.author.mention} you cannot fight while already in a fight or in a dungeon.')
     else:
@@ -309,12 +277,12 @@ async def attack(ctx):
     if in_fight is None:
         await ctx.send(f'You are not currently in a fight, {ctx.author.mention}')
     else:
-        await player_normal_attack(in_fight, ctx)
+        await logic.player_normal_attack(in_fight, ctx, None)
 
         file_management.update_player(in_fight.player)
         file_management.delete_fight(ctx.author.name)
 
-        await finish_turn(in_fight, ctx)
+        await logic.finish_turn(in_fight, ctx)
     await asyncio.sleep(0.3)
 
 @bot.command()
@@ -329,11 +297,11 @@ async def dungeon(ctx, arg=None):
     if player_obj is not None:
         curr_area = area_module.areas[player_obj.currentArea - 1]
         if arg is None:
-            await show_current_dungeons(curr_area, player_obj, ctx)
+            await logic.show_current_dungeons(curr_area, player_obj, ctx)
         else:
             in_fight = file_management.check_if_in_fight(ctx.author.name) 
             if in_fight is None:
-                await dungeon_logic(player_obj, curr_area, arg, ctx)
+                await logic.dungeon_logic(player_obj, curr_area, arg, ctx)
             elif player_obj.inDungeon:
                 await ctx.send(f'You cannot traverse further into the dungeon while you are in combat, {ctx.author.name}')
             else:
@@ -351,7 +319,7 @@ async def spells(ctx, arg=0):
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
         if arg == 0:
-            await show_player_spells(player_obj, ctx)
+            await logic.show_player_spells(player_obj, ctx)
         else:
             fight_obj = file_management.check_if_in_fight(ctx.author.name)
             if fight_obj is not None:
@@ -360,7 +328,7 @@ async def spells(ctx, arg=0):
                 file_management.delete_fight(ctx.author.name)
                 await ctx.send(info_str)
 
-                await finish_turn(fight_obj, ctx)
+                await logic.finish_turn(fight_obj, ctx)
             else:
                 await ctx.send(f'You are not currently in a fight, {ctx.author.mention}')
     else:
@@ -377,7 +345,7 @@ async def combos(ctx, arg=0):
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
         if arg == 0:
-            await show_player_combos(player_obj, ctx)
+            await logic.show_player_combos(player_obj, ctx)
         else:
             fight_obj = file_management.check_if_in_fight(ctx.author.name)
             if fight_obj is not None:
@@ -386,7 +354,7 @@ async def combos(ctx, arg=0):
                 file_management.delete_fight(ctx.author.name)
                 await ctx.send(info_str)
 
-                await finish_turn(fight_obj, ctx)
+                await logic.finish_turn(fight_obj, ctx)
             else:
                 await ctx.send(f'You are not currently in a fight, {ctx.author.mention}')
     else:
@@ -400,7 +368,7 @@ async def masteries(ctx):
     '''
     player_obj = file_management.check_if_exists(ctx.author.name)
     if player_obj is not None:
-        await show_player_masteries(player_obj, ctx)
+        await logic.show_player_masteries(player_obj, ctx)
     else:
         await ctx.send(f'You do not have a character in Escordia yet, {ctx.author.mention}. Create one typing !start.')
 
@@ -558,6 +526,6 @@ async def command_error(ctx, error):
 @bot.event
 async def on_ready():
     channel = bot.get_channel(1004789835522908293)
-    await channel.send("Escordia RPG is now **online**!")
+    #await channel.send("Escordia RPG is now **online**!")
 
 bot.run(DISCORD_TOKEN)
